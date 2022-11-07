@@ -4,8 +4,8 @@ IF.nop:	0
 ID.Instr:	bitarray('10001100000000010000000000000000')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F730>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F7D0>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EAA60>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EAB00>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('00000')
 EX.Wrt_reg_addr:	bitarray('00000')
@@ -36,8 +36,8 @@ IF.nop:	0
 ID.Instr:	bitarray('10001100000000100000000000000100')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F6E0>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EAA10>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10001')
 EX.Wrt_reg_addr:	bitarray('00000')
@@ -68,8 +68,8 @@ IF.nop:	0
 ID.Instr:	bitarray('00000000000000010011000000100001')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F9B0>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EACE0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10001')
 EX.Wrt_reg_addr:	bitarray('00001')
@@ -100,8 +100,8 @@ IF.nop:	0
 ID.Instr:	bitarray('10001100000001000000000000000100')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721FB90>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EAEC0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('00000')
 EX.Wrt_reg_addr:	bitarray('00000')
@@ -132,8 +132,8 @@ IF.nop:	0
 ID.Instr:	bitarray('10101100000001000000000000000000')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721FF00>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB320>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10001')
 EX.Wrt_reg_addr:	bitarray('00010')
@@ -164,8 +164,8 @@ IF.nop:	0
 ID.Instr:	bitarray('00000000100001100011000000100001')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F780>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB3C0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10101')
 EX.Wrt_reg_addr:	bitarray('00010')
@@ -196,8 +196,8 @@ IF.nop:	0
 ID.Instr:	bitarray('00000000110000010011100000100011')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721FD20>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB050>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('00000')
 EX.Wrt_reg_addr:	bitarray('00000')
@@ -228,8 +228,8 @@ IF.nop:	0
 ID.Instr:	bitarray('10101100000001110000000000001000')
 ID.nop:	0
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82723C080>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EAC40>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('00000')
 EX.Wrt_reg_addr:	bitarray('00000')
@@ -260,8 +260,8 @@ IF.nop:	1
 ID.Instr:	bitarray('11111111111111111111111111111111')
 ID.nop:	1
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F690>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB4B0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10101')
 EX.Wrt_reg_addr:	bitarray('00011')
@@ -292,8 +292,8 @@ IF.nop:	1
 ID.Instr:	bitarray('11111111111111111111111111111111')
 ID.nop:	1
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F690>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB4B0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10101')
 EX.Wrt_reg_addr:	bitarray('00011')
@@ -324,8 +324,8 @@ IF.nop:	1
 ID.Instr:	bitarray('11111111111111111111111111111111')
 ID.nop:	1
 EX.Read_data1:	bitarray('00000000000000000000000000000000')
-EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721E5B0>
-EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x000001D82721F690>
+EX.Read_data2:	<built-in method to01 of bitarray.bitarray object at 0x00000201861E9840>
+EX.Imm:	<built-in method to01 of bitarray.bitarray object at 0x00000201861EB4B0>
 EX.Rs:	bitarray('00000')
 EX.Rt:	bitarray('10101')
 EX.Wrt_reg_addr:	bitarray('00011')

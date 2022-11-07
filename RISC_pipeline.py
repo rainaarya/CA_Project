@@ -6,18 +6,17 @@ import bitarray
 from bitarray import bitarray
 from bitarray.util import ba2int
 import math
-import numpy as np
 
 class IFClass:  # FETCH: fetches instruction and updates PC
     PC = bitarray(32)
-    nop = bool(0)
+    nop = 0
 
     def __repr__(self):
         print("PC: ", self.PC, "nop: ", self.nop)
 
 class IDClass:  # DECODE: reads from the register RF and generates control signals required in subsequent stages.
     Instr = bitarray(32)
-    nop = bool(0)
+    nop = 0
     def __repr__(self):
         print("Instr: ", self.Instr, "nop: ", self.nop)
 
@@ -34,17 +33,17 @@ class EXClass:  # EXECUTE: performs ALU
     # bitset<5>   Wrt_reg_addr
     Wrt_reg_addr = bitarray(5)
     # bool        is_I_type
-    is_I_type = bool(0)
+    is_I_type = 0
     # bool        rd_mem
-    rd_mem = bool(0)
+    rd_mem = 0
     # bool        wrt_mem
-    wrt_mem = bool(0)
+    wrt_mem = 0
     # bool        alu_op      //1 for addu, lw, sw, 0 for subu
-    alu_op = bool(1)
+    alu_op = 1
     # bool        wrt_enable
-    wrt_enable = bool(0)
+    wrt_enable =0
     # bool        nop
-    nop = bool(0)
+    nop = 0
 
     def __repr__(self):
         print("Read_data1: ", self.Read_data1, "Read_data2: ", self.Read_data2, "Imm: ", self.Imm, "Rs: ", self.Rs,"Rt: ", self.Rt, "Wrt_reg_addr: ", self.Wrt_reg_addr, "is_I_type: ", self.is_I_type, "rd_mem: ", self.rd_mem, "wrt_mem: ", self.wrt_mem, "alu_op: ", self.alu_op, "wrt_enable: ", self.wrt_enable, "nop: ", self.nop)
@@ -61,13 +60,13 @@ class MEMClass:  # MEMORY: loads or stores a 32 bit word from data memory
     # bitset<5>   Wrt_reg_addr
     Wrt_reg_addr = bitarray(5)
     # bool        rd_mem
-    rd_mem = bool(0)
+    rd_mem = 0
     # bool        wrt_mem
-    wrt_mem = bool(0)
+    wrt_mem = 0
     # bool        wrt_enable
-    wrt_enable = bool(0)
+    wrt_enable = 0
     # bool        nop
-    nop = bool(0)
+    nop = 0
 
     def __repr__(self):
         print("ALUresult: ", self.ALUresult, "Store_data: ", self.Store_data, "Rs: ", self.Rs, "Rt: ", self.Rt, "Wrt_reg_addr: ", self.Wrt_reg_addr, "rd_mem: ", self.rd_mem, "wrt_mem: ", self.wrt_mem, "wrt_enable: ", self.wrt_enable, "nop: ", self.nop)
@@ -82,9 +81,9 @@ class WBClass:  # Writeback: writes back data to the RF.
     # bitset<5>   Wrt_reg_addr
     Wrt_reg_addr = bitarray(5)
     # bool        wrt_enable
-    wrt_enable = bool(0)
+    wrt_enable = 0
     # bool        nop
-    nop = bool(0)
+    nop = 0
 
     def __repr__(self):
         print("Wrt_data: ", self.Wrt_data, "Rs: ", self.Rs, "Rt: ", self.Rt, "Wrt_reg_addr: ", self.Wrt_reg_addr, "wrt_enable: ", self.wrt_enable, "nop: ", self.nop)
@@ -223,7 +222,7 @@ class INSMem:
         insmem = "".join(((self.__IMem[ba2int(read_address)].to01()), (self.__IMem[ba2int(read_address) + 1].to01()),
                           (self.__IMem[ba2int(read_address) + 2].to01()),
                           (self.__IMem[ba2int(read_address) + 3].to01())))
-        self.Instruction = bitarray(insmem)
+        self.Instruction = bitarray(insmem[:32])
         return self.Instruction
 
 
@@ -267,7 +266,7 @@ class DataMem:
     def readDataMem(self, address):
         datamem = "".join(((self.__DMem[int(math.log(ba2int(address)))].to01()), (self.__DMem[int(math.log(ba2int(address))) + 1].to01()),
                            (self.__DMem[int(math.log(ba2int(address))) + 2].to01()), (self.__DMem[int(math.log(ba2int(address))) + 3].to01())))
-        self.ReadData = bitarray(datamem)
+        self.ReadData = bitarray(datamem[:32])
         return self.ReadData
 
     #         bitset<32> readDataMem(bitset<32> Address)
