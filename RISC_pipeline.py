@@ -123,7 +123,7 @@ class RegFile:
     # a function which returns bit array by reading the reg address
 
     def readRF(self, reg_addr):
-        print(ba2int(reg_addr))
+        # print(ba2int(reg_addr))
         if(ba2int(reg_addr)==0):
             return  self.__Registers[0]
         elif (ba2int(reg_addr)==1):
@@ -183,7 +183,7 @@ class INSMem:
     Instruction = bitarray(32)
 
     def __init__(self):
-        self.__IMem = self.__IMem * 1000000000
+        self.__IMem = self.__IMem * 1000
         line = ""
         i = 0
         while True:
@@ -237,7 +237,7 @@ class DataMem:
 
     #         def init(self):
     def __init__(self):
-        self.__DMem = self.__DMem * 1000000000
+        self.__DMem = self.__DMem * 1000
         line = ""
         i = 0
         while True:
@@ -439,8 +439,12 @@ def printState(state, cycle):
 
 def shiftbits(inst, start):
     inst_int = ba2int(inst)
-    return ((str(bin(ctypes.c_ulong(inst_int >> start).value))[2:]).zfill(32))[:32]
-
+    st =  ((str(bin(ctypes.c_ulong(inst_int >> start).value))[2:]))
+    length = len(st)
+    if(length<32):
+        st = st.zfill(32)
+    print(st)
+    return st[length-32:]
 
 # return type bit array (32)
 
@@ -502,8 +506,8 @@ def main():
     funct = bitarray(6)
 
     # //control signals
-    IType = bitarray(1)
-    RType = bitarray(1)
+    IType = 0
+    RType = 0
     IsBranch = bitarray(1)
 
     # // ALU signals
@@ -516,17 +520,15 @@ def main():
     cycle = 0
 
     while (True):
-        if(ba2int(state.IF.PC)==12):
-            print( 12)
         # /*stages will only execute when the nop bit is zero, so therefore we put nop 1 for all except IF stage initially*/
         # /* --------------------- WB stage --------------------- */
-        if (state.WB.nop == int(0)):
+        if (state.WB.nop == 0):
             if (state.WB.wrt_enable):
                 # /*Putting result data in destination register*/
                 myRF.writeRF(state.WB.Wrt_reg_addr, state.WB.Wrt_data)
                 # /* --------------------- MEM stage --------------------- */
         newState.WB.nop = state.MEM.nop
-        if (state.MEM.nop == int(0)):
+        if (state.MEM.nop == 0):
             if (state.MEM.wrt_mem):
                 myDataMem.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)  # //write to dmem
             if (state.MEM.rd_mem):
@@ -539,7 +541,7 @@ def main():
             newState.WB.wrt_enable = state.MEM.wrt_enable
             # /* --------------------- EX stage --------------------- */
         newState.MEM.nop = state.EX.nop
-        if (state.EX.nop == int(0)):
+        if (state.EX.nop == 0):
             newState.MEM.Store_data = state.EX.Read_data2
             if (state.EX.is_I_type):
                 signext = signextend(state.EX.Imm)
@@ -558,68 +560,68 @@ def main():
             newState.MEM.Wrt_reg_addr = state.EX.Wrt_reg_addr
             # /* --------------------- ID stage --------------------- */
         newState.EX.nop = state.ID.nop
-        if state.ID.nop == int(0):
+        if state.ID.nop == 0:
             instruction = state.ID.Instr
             opcode = bitarray(6)
-            opcode = bitarray(shiftbits(instruction, 26))
-            if(ctypes.c_ulong(ba2int(opcode)).value == int(0)):
+            opcode = bitarray(shiftbits(instruction, 26))[:6]
+            if(ctypes.c_ulong(ba2int(opcode)).value == 0):
                 RType = 1
             else:
                 Rtype= 0
-            if(ctypes.c_ulong(ba2int(opcode)).value != int(0) and ctypes.c_ulong(ba2int(opcode)).value != 2):
-                IType = int(1)
+            if(ctypes.c_ulong(ba2int(opcode)).value != 0 and ctypes.c_ulong(ba2int(opcode)).value != 2):
+                IType = 1
             else:
-                IType = int(0)
+                IType = 0
             if(ctypes.c_ulong(ba2int(opcode)).value == 4):
-                IsBranch = int(1)
+                IsBranch = 1
             else:
-                IsBranch = int(0)
+                IsBranch = 0
 
             if(ctypes.c_ulong(ba2int(opcode)).value == 35):
-                newState.EX.rd_mem = int(1)
+                newState.EX.rd_mem = 1
             else:
-                newState.EX.rd_mem = int(0)
+                newState.EX.rd_mem = 0
 
             if(ctypes.c_ulong(ba2int(opcode)).value == 43):
-                newState.EX.wrt_mem = int(1)
+                newState.EX.wrt_mem = 1
             else:
-                newState.EX.wrt_mem= int(0)
+                newState.EX.wrt_mem= 0
             
-            if(newState.EX.wrt_mem == int(1) or ctypes.c_ulong(IsBranch).value == int(1)):
-                newState.EX.wrt_enable = int(1)
+            if(newState.EX.wrt_mem == 1 or ctypes.c_ulong(IsBranch).value == 1):
+                newState.EX.wrt_enable = 1
             else:
-                newState.EX.wrt_enable= int(0)
+                newState.EX.wrt_enable= 0
 
-            if(IType == int(1) and IsBranch == int(0)):
-                newState.EX.is_I_type = int(1)
+            if(IType == 1 and IsBranch == 0 ):
+                newState.EX.is_I_type = 1
             else:
-                newState.EX.is_I_type= int(0)
+                newState.EX.is_I_type= 0
 
-            funct = bitarray((shiftbits(instruction, int(0)))) [:6]
+            funct = bitarray((shiftbits(instruction, 0))) [:6]
 
             if(ctypes.c_ulong(ba2int(funct)).value == 35):
-                newState.EX.alu_op = int(1)
+                newState.EX.alu_op = 1
             else:
-                newState.EX.alu_op= int(0)
+                newState.EX.alu_op= 0
 
-            newState.EX.Rs = bitarray(shiftbits(instruction, 21))
-            newState.EX.Rt = bitarray(shiftbits(instruction, 16))
+            newState.EX.Rs = bitarray(shiftbits(instruction, 21))[:5]
+            newState.EX.Rt = bitarray(shiftbits(instruction, 16))[:5]
             newState.EX.Read_data1 = myRF.readRF(newState.EX.Rs)
             newState.EX.Read_data2 = myRF.readRF(newState.EX.Rt)
             if(newState.EX.is_I_type):
                 newState.EX.Wrt_reg_addr =  newState.EX.Rt
             else:
-                newState.EX.Wrt_reg_addr =  bitarray((shiftbits(instruction, 11)))
+                newState.EX.Wrt_reg_addr =  bitarray((shiftbits(instruction, 11)))[:5]
             # /*if i-type wrreg=reg2, else wrreg is seperate*/
-            newState.EX.Imm = bitarray((shiftbits(instruction, int(0))))
+            newState.EX.Imm = bitarray((shiftbits(instruction,0)))[:16]
             # braddr = bitarray(str(ctypes.c_ulong((ctypes.c_ulong(ba2int(state.IF.PC)).value))) + "4" + str((bitarray(((bitarray((shiftbits(signext, int(0)))))) + "00")
             # braddr = bitarray(ctypes.c_ulong(ba2int(state.IF.PC)).value + 4 + ctypes.c_ulong(ba2int(bitarray(str(ba2int(bitarray(shiftbits(signext,int(0)))))+"00"))).value) ISKO BAADMEIN DEKHNA HAI
             # /* --------------------- IF stage --------------------- */
         newState.ID.nop = state.IF.nop
-        if state.IF.nop == int(0):
+        if state.IF.nop == 0:
             newState.ID.Instr = myInsMem.readInstr(state.IF.PC)
             newState.IF.PC = bitarray((str(bin(ba2int(state.IF.PC) + 4))[2:]).zfill(32))
-            if str(newState.ID.Instr) == "11111111111111111111111111111111":
+            if ba2int(newState.ID.Instr) == ba2int(bitarray("11111111111111111111111111111111")):
                 newState.IF.PC = state.IF.PC  # //PC remains the same//
                 newState.ID.nop = newState.IF.nop = 1
         if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
