@@ -223,6 +223,20 @@ def signextend(bits):
 def main():
     RF = RegisterFile()
     DM = DMem()
+
+    # read instructions from instructions.txt and store in imem.txt by having 8 bits per line
+    with open("instructions.txt", "r") as inst:
+        with open("imem.txt", "w") as imem:
+            for line in inst:
+                imem.write(line[:8])
+                imem.write("\n")
+                imem.write(line[8:16])
+                imem.write("\n")
+                imem.write(line[16:24])
+                imem.write("\n")
+                imem.write(line[24:32])
+                imem.write("\n")
+
     IM = IMem()
     state = stateClass()
     newstate = stateClass()
