@@ -6,6 +6,7 @@ import bitarray
 from bitarray import bitarray
 from bitarray.util import ba2int
 import math
+import numpy as np
 
 class IFClass:  # FETCH: fetches instruction and updates PC
     PC = bitarray(32)
@@ -182,7 +183,7 @@ class INSMem:
     Instruction = bitarray(32)
 
     def __init__(self):
-        self.__IMem = self.__IMem * 1000
+        self.__IMem = self.__IMem * 1000000000
         line = ""
         i = 0
         while True:
@@ -236,7 +237,7 @@ class DataMem:
 
     #         def init(self):
     def __init__(self):
-        self.__DMem = self.__DMem * 1000
+        self.__DMem = self.__DMem * 1000000000
         line = ""
         i = 0
         while True:
@@ -332,11 +333,11 @@ def printState(state, cycle):
     while True:
         try:
             printstate = open("stateresult.txt", "a+")
-            print(state.IF)
-            print(state.ID)
-            print(state.EX)
-            print(state.MEM)
-            print(state.WB)
+            # print(state.IF)
+            # print(state.ID)
+            # print(state.EX)
+            # print(state.MEM)
+            # print(state.WB)
             printstate.write("State after executing cycle:\t" + str(cycle) + "\n")
 
             printstate.write("IF.PC:\t" + str(ba2int(state.IF.PC)) + "\n")
@@ -344,28 +345,28 @@ def printState(state, cycle):
             printstate.write("IF.nop:\t" + str(state.IF.nop) + "\n")
 
             # printstate<<"ID.Instr:\t"<<state.ID.Instr<<endl  in python
-            printstate.write("ID.Instr:\t" + state.ID.Instr.to01() + "\n")
+            printstate.write("ID.Instr:\t" + str(state.ID.Instr) + "\n")
 
             # printstate<<"ID.nop:\t"<<state.ID.nop<<endl  in python
             printstate.write("ID.nop:\t" + str(state.ID.nop) + "\n")
 
             # printstate<<"EX.Read_data1:\t"<<state.EX.Read_data1<<endl  in py
-            printstate.write("EX.Read_data1:\t" + state.EX.Read_data1.to01() + "\n")
+            printstate.write("EX.Read_data1:\t" + str(state.EX.Read_data1) + "\n")
 
             # printstate<<"EX.Read_data2:\t"<<state.EX.Read_data2<<endl  in py
-            printstate.write("EX.Read_data2:\t" + state.EX.Read_data2.to01() + "\n")
+            printstate.write("EX.Read_data2:\t" + str(state.EX.Read_data2.to01) + "\n")
 
             # printstate<<"EX.Imm:\t"<<state.EX.Imm<<endl  in py
-            printstate.write("EX.Imm:\t" + state.EX.Imm.to01() + "\n")
+            printstate.write("EX.Imm:\t" + str(state.EX.Imm.to01) + "\n")
 
             # printstate<<"EX.Rs:\t"<<state.EX.Rs<<endl  in py
-            printstate.write("EX.Rs:\t" + state.EX.Rs.to01() + "\n")
+            printstate.write("EX.Rs:\t" + str(state.EX.Rs) + "\n")
 
             # printstate<<"EX.Rt:\t"<<state.EX.Rt<<endl  in py
-            printstate.write("EX.Rt:\t" + state.EX.Rt.to01() + "\n")
+            printstate.write("EX.Rt:\t" + str(state.EX.Rt) + "\n")
 
             # printstate<<"EX.Wrt_reg_addr:\t"<<state.EX.Wrt_reg_addr<<endl  in py
-            printstate.write("EX.Wrt_reg_addr:\t" + state.EX.Wrt_reg_addr.to01() + "\n")
+            printstate.write("EX.Wrt_reg_addr:\t" + str(state.EX.Wrt_reg_addr) + "\n")
 
             # printstate<<"EX.is_I_type:\t"<<state.EX.is_I_type<<endl   in py
             printstate.write("EX.is_I_type:\t" + str(state.EX.is_I_type) + "\n")
@@ -386,19 +387,19 @@ def printState(state, cycle):
             printstate.write("EX.nop:\t" + str(state.EX.nop) + "\n")
 
             # printstate<<"MEM.ALUresult:\t"<<state.MEM.ALUresult<<endl
-            printstate.write("MEM.ALUresult:\t" + state.MEM.ALUresult.to01() + "\n")
+            printstate.write("MEM.ALUresult:\t" + str(state.MEM.ALUresult) + "\n")
 
             # printstate<<"MEM.Store_data:\t"<<state.MEM.Store_data<<endl
-            printstate.write("MEM.Store_data:\t" + state.MEM.Store_data.to01() + "\n")
+            printstate.write("MEM.Store_data:\t" + str(state.MEM.Store_data) + "\n")
 
             # printstate<<"MEM.Rs:\t"<<state.MEM.Rs<<endl
-            printstate.write("MEM.Rs:\t" + state.MEM.Rs.to01() + "\n")
+            printstate.write("MEM.Rs:\t" + str(state.MEM.Rs) + "\n")
 
             # printstate<<"MEM.Rt:\t"<<state.MEM.Rt<<endl
-            printstate.write("MEM.Rt:\t" + state.MEM.Rt.to01() + "\n")
+            printstate.write("MEM.Rt:\t" + str(state.MEM.Rt) + "\n")
 
             # printstate<<"MEM.Wrt_reg_addr:\t"<<state.MEM.Wrt_reg_addr<<endl
-            printstate.write("MEM.Wrt_reg_addr:\t" + state.MEM.Wrt_reg_addr.to01() + "\n")
+            printstate.write("MEM.Wrt_reg_addr:\t" + str(state.MEM.Wrt_reg_addr) + "\n")
 
             # printstate<<"MEM.rd_mem:\t"<<state.MEM.rd_mem<<endl
             printstate.write("MEM.rd_mem:\t" + str(state.MEM.rd_mem) + "\n")
@@ -413,16 +414,16 @@ def printState(state, cycle):
             printstate.write("MEM.nop:\t" + str(state.MEM.nop) + "\n")
 
             # printstate<<"WB.Wrt_data:\t"<<state.WB.Wrt_data<<endl
-            printstate.write("WB.Wrt_data:\t" + state.WB.Wrt_data.to01() + "\n")
+            printstate.write("WB.Wrt_data:\t" + str(state.WB.Wrt_data) + "\n")
 
             # printstate<<"WB.Rs:\t"<<state.WB.Rs<<endl
-            printstate.write("WB.Rs:\t" + state.WB.Rs.to01() + "\n")
+            printstate.write("WB.Rs:\t" + str(state.WB.Rs) + "\n")
 
             # printstate<<"WB.Rt:\t"<<state.WB.Rt<<endl
-            printstate.write("WB.Rt:\t" + state.WB.Rt.to01() + "\n")
+            printstate.write("WB.Rt:\t" + str(state.WB.Rt) + "\n")
 
             # printstate<<"WB.Wrt_reg_addr:\t"<<state.WB.Wrt_reg_addr<<endl
-            printstate.write("WB.Wrt_reg_addr:\t" + state.WB.Wrt_reg_addr.to01() + "\n")
+            printstate.write("WB.Wrt_reg_addr:\t" + str(state.WB.Wrt_reg_addr) + "\n")
 
             # printstate<<"WB.wrt_enable:\t"<<state.WB.wrt_enable<<endl
             printstate.write("WB.wrt_enable:\t" + str(state.WB.wrt_enable) + "\n")
@@ -515,6 +516,8 @@ def main():
     cycle = 0
 
     while (True):
+        if(ba2int(state.IF.PC)==12):
+            print( 12)
         # /*stages will only execute when the nop bit is zero, so therefore we put nop 1 for all except IF stage initially*/
         # /* --------------------- WB stage --------------------- */
         if (state.WB.nop == int(0)):
@@ -559,22 +562,54 @@ def main():
             instruction = state.ID.Instr
             opcode = bitarray(6)
             opcode = bitarray(shiftbits(instruction, 26))
-            RType = (ctypes.c_ulong(ba2int(opcode)).value == int(0)) if int(1) else int(0)  # /*r-type has opcode 000000*/
-            IType = (ctypes.c_ulong(ba2int(opcode)).value != int(0) and ctypes.c_ulong(ba2int(opcode)).value != 2) if int(1) else int(0)
-            IsBranch = (ctypes.c_ulong(ba2int(opcode)).value == 4) if int(1) else int(0)
-            newState.EX.rd_mem = (ctypes.c_ulong(ba2int(opcode)).value == 35) if int(1) else int(0)
-            newState.EX.wrt_mem = (ctypes.c_ulong(ba2int(opcode)).value == 43) if int(1) else int(0)
-            newState.EX.wrt_enable = (
-                    newState.EX.wrt_mem == int(1) or ctypes.c_ulong(IsBranch).value == int(1)) if int(0) else int(1)  # //shouldn't be either store word or branch
-            newState.EX.is_I_type = (
-                    IType == int(1) and IsBranch == int(0)) if int(1) else int(0)  # //to make sure it's not a branch instruction
+            if(ctypes.c_ulong(ba2int(opcode)).value == int(0)):
+                RType = 1
+            else:
+                Rtype= 0
+            if(ctypes.c_ulong(ba2int(opcode)).value != int(0) and ctypes.c_ulong(ba2int(opcode)).value != 2):
+                IType = int(1)
+            else:
+                IType = int(0)
+            if(ctypes.c_ulong(ba2int(opcode)).value == 4):
+                IsBranch = int(1)
+            else:
+                IsBranch = int(0)
+
+            if(ctypes.c_ulong(ba2int(opcode)).value == 35):
+                newState.EX.rd_mem = int(1)
+            else:
+                newState.EX.rd_mem = int(0)
+
+            if(ctypes.c_ulong(ba2int(opcode)).value == 43):
+                newState.EX.wrt_mem = int(1)
+            else:
+                newState.EX.wrt_mem= int(0)
+            
+            if(newState.EX.wrt_mem == int(1) or ctypes.c_ulong(IsBranch).value == int(1)):
+                newState.EX.wrt_enable = int(1)
+            else:
+                newState.EX.wrt_enable= int(0)
+
+            if(IType == int(1) and IsBranch == int(0)):
+                newState.EX.is_I_type = int(1)
+            else:
+                newState.EX.is_I_type= int(0)
+
             funct = bitarray((shiftbits(instruction, int(0)))) [:6]
-            newState.EX.alu_op = (ctypes.c_ulong(ba2int(funct)).value == 35) if int(0) else int(1)  # /*subu function is int(0), hex 23= dec 35*/
+
+            if(ctypes.c_ulong(ba2int(funct)).value == 35):
+                newState.EX.alu_op = int(1)
+            else:
+                newState.EX.alu_op= int(0)
+
             newState.EX.Rs = bitarray(shiftbits(instruction, 21))
             newState.EX.Rt = bitarray(shiftbits(instruction, 16))
             newState.EX.Read_data1 = myRF.readRF(newState.EX.Rs)
             newState.EX.Read_data2 = myRF.readRF(newState.EX.Rt)
-            newState.EX.Wrt_reg_addr = newState.EX.is_I_type if newState.EX.Rt else bitarray((shiftbits(instruction, 11)))
+            if(newState.EX.is_I_type):
+                newState.EX.Wrt_reg_addr =  newState.EX.Rt
+            else:
+                newState.EX.Wrt_reg_addr =  bitarray((shiftbits(instruction, 11)))
             # /*if i-type wrreg=reg2, else wrreg is seperate*/
             newState.EX.Imm = bitarray((shiftbits(instruction, int(0))))
             # braddr = bitarray(str(ctypes.c_ulong((ctypes.c_ulong(ba2int(state.IF.PC)).value))) + "4" + str((bitarray(((bitarray((shiftbits(signext, int(0)))))) + "00")
