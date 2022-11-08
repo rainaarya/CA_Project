@@ -163,6 +163,20 @@ class DMem:
                 dmemout.write(self.DMem[j].to01())
                 dmemout.write("\n")
 
+# class MMR :
+#     def __init__(self):
+#         # for LOADNOC
+#         self.MMR0 = []
+#         self.MMR1 = []
+#         self.MMR2 = []
+#         self.MMR3 = []
+#         # for STORENOC
+#         self.MMR4 = []
+#     # assume addr in int format
+#     def readMem(self,regVal,addr):
+#         if()
+
+
 def printState(state, cycle):
     with open ("snapshot.txt", "a") as snap:
         snap.write("cycle " + str(cycle) + "\t\n")
@@ -318,7 +332,6 @@ def main():
                     signext=signextend(state.EX.Imm)
                     newstate.MEM.Store_data = state.EX.Read_data2 # this is the data to be stored in memory (rs2)
                     newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32) # this is the address to store the data at (rs1 + imm-offset)
-
             
             newstate.MEM.rd_mem = state.EX.rd_mem
             newstate.MEM.wrt_mem = state.EX.wrt_mem
@@ -328,7 +341,6 @@ def main():
             newstate.MEM.wrt_enable = state.EX.wrt_enable
 
         newstate.EX.nop = state.ID.nop
-
         # ID stage
         if not state.ID.nop:
             instruction = state.ID.instr
@@ -401,16 +413,11 @@ def main():
                 newstate.EX.wrt_enable=True
                 newstate.EX.rd_mem=False
                 newstate.EX.wrt_mem=False
-                if(RF.readRF(Rs1)!=RF.readRF(Rs2)):
-                    # branch not taken
-                    newstate.EX.nop =False
-                    newstate.ID.nop =True
-                else:
-                    #branch taken
-                    newstate.IF.pc = int2ba(ba2int(state.IF.pc)+ ba2int(signextend(state.EX.Imm)) + 4, length=32)
+                if(RF.readRF(Rs1)==RF.readRF(Rs2)):
+                    newstate.ID.nop = True
+                    newstate.IF.nop = True
 
         newstate.ID.nop = state.IF.nop
-
         # IF stage
         if not state.IF.nop:
             newstate.ID.instr = IM.readInstr(state.IF.pc)
