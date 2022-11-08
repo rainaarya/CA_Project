@@ -255,7 +255,6 @@ def main():
                 #print("WB stage")
                 RF.writeRF(state.WB.Rd, state.WB.Wrt_data)
         
-        newstate.WB.nop = state.MEM.nop
         
         # MEM stage
         if not state.MEM.nop:
@@ -272,7 +271,7 @@ def main():
             newstate.WB.Rd = state.MEM.Rd
             newstate.WB.wrt_enable = state.MEM.wrt_enable
 
-        newstate.MEM.nop = state.EX.nop
+        newstate.WB.nop = state.MEM.nop
 
         # EX stage
         if not state.EX.nop:
@@ -318,7 +317,33 @@ def main():
                     signext=signextend(state.EX.Imm)
                     newstate.MEM.Store_data = state.EX.Read_data2 # this is the data to be stored in memory (rs2)
                     newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32) # this is the address to store the data at (rs1 + imm-offset)
+            
+            if state.EX.is_B_type:
+                if state.EX.alu_op[7:10] == bitarray('000'):
+                    signext=signextend(state.EX.Imm+bitarray('0')) # add 0 to the end of the immediate to make it 13 bits
+                    if state.EX.Read_data1 == state.EX.Read_data2:
+                        newstate.MEM.nop = False
+                        newstate.EX.nop = True
+                        newstate.ID.nop = True
 
+                        newstate.IF.pc= int2ba((ba2int(state.IF.pc) + ba2int(signext) - 8), length=32) # -8 because PC is incremented by 4 when the branch instruc is in IF stage and again by 4 when it is in ID stage. So we need to subtract 2*4=8 to get the correct PC value
+                        newstate.IF.nop = False
+
+                        print("Branch taken")
+                        newstate.MEM.rd_mem = state.EX.rd_mem
+                        newstate.MEM.wrt_mem = state.EX.wrt_mem
+                        newstate.MEM.Rs1 = state.EX.Rs1
+                        newstate.MEM.Rs2 = state.EX.Rs2
+                        newstate.MEM.Rd = state.EX.Rd
+                        newstate.MEM.wrt_enable = state.EX.wrt_enable
+                        newstate.MEM.ALUresult = bitarray('00000000000000000000000000000000') # dummy value, not actually used or needed
+
+                        printState(newstate, cycle)
+                        state = newstate
+                        cycle += 1
+                        continue
+                    else:
+                        print("Branch not taken")
             
             newstate.MEM.rd_mem = state.EX.rd_mem
             newstate.MEM.wrt_mem = state.EX.wrt_mem
@@ -327,7 +352,8 @@ def main():
             newstate.MEM.Rd = state.EX.Rd
             newstate.MEM.wrt_enable = state.EX.wrt_enable
 
-        newstate.EX.nop = state.ID.nop
+        newstate.MEM.nop = state.EX.nop
+        
 
         # ID stage
         if not state.ID.nop:
@@ -393,24 +419,21 @@ def main():
                 newstate.EX.Read_data1 = RF.readRF(Rs1)
                 newstate.EX.Read_data2 = RF.readRF(Rs2)
                 newstate.EX.Imm = instruction[0:7] + instruction[20:25]
+            
+            # write code for branch
             elif BType:
-                newstate.EX.Rd = bitarray('00000')
                 newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.wrt_enable = True
-                # newstate.EX.IType = True
-                newstate.EX.wrt_enable=True
-                newstate.EX.rd_mem=False
-                newstate.EX.wrt_mem=False
-                if(RF.readRF(Rs1)!=RF.readRF(Rs2)):
-                    # branch not taken
-                    newstate.EX.nop =False
-                    newstate.ID.nop =True
-                else:
-                    #branch taken
-                    newstate.IF.pc = int2ba(ba2int(state.IF.pc)+ ba2int(signextend(state.EX.Imm)) + 4, length=32)
+                newstate.EX.rd_mem = False
+                newstate.EX.wrt_mem = False
+                newstate.EX.wrt_enable = False
+                newstate.EX.Rs1 = Rs1
+                newstate.EX.Rs2 = Rs2
+                newstate.EX.Read_data1 = RF.readRF(Rs1)
+                newstate.EX.Read_data2 = RF.readRF(Rs2)
+                newstate.EX.Imm = bitarray(instruction[0]) + bitarray(instruction[24]) + instruction[1:7] + instruction[20:24] # + bitarray('0')
 
-        newstate.ID.nop = state.IF.nop
-
+        newstate.EX.nop = state.ID.nop
+        
         # IF stage
         if not state.IF.nop:
             newstate.ID.instr = IM.readInstr(state.IF.pc)
@@ -419,6 +442,8 @@ def main():
                 newstate.IF.pc=state.IF.pc
                 newstate.ID.nop = True
                 newstate.IF.nop = True
+        
+        newstate.ID.nop = state.IF.nop
             
         if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
             printState(newstate,cycle)
