@@ -393,8 +393,21 @@ def main():
                 newstate.EX.Read_data1 = RF.readRF(Rs1)
                 newstate.EX.Read_data2 = RF.readRF(Rs2)
                 newstate.EX.Imm = instruction[0:7] + instruction[20:25]
-            
-            # write code for branch
+            elif BType:
+                newstate.EX.Rd = bitarray('00000')
+                newstate.EX.alu_op = bitarray('0000000') + funct3
+                newstate.EX.wrt_enable = True
+                # newstate.EX.IType = True
+                newstate.EX.wrt_enable=True
+                newstate.EX.rd_mem=False
+                newstate.EX.wrt_mem=False
+                if(RF.readRF(Rs1)!=RF.readRF(Rs2)):
+                    # branch not taken
+                    newstate.EX.nop =False
+                    newstate.ID.nop =True
+                else:
+                    #branch taken
+                    newstate.IF.pc = int2ba(ba2int(state.IF.pc)+ ba2int(signextend(state.EX.Imm)) + 4, length=32)
 
         newstate.ID.nop = state.IF.nop
 
