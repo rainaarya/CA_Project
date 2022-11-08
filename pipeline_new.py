@@ -163,6 +163,20 @@ class DMem:
                 dmemout.write(self.DMem[j].to01())
                 dmemout.write("\n")
 
+# class MMR :
+#     def __init__(self):
+#         # for LOADNOC
+#         self.MMR0 = []
+#         self.MMR1 = []
+#         self.MMR2 = []
+#         self.MMR3 = []
+#         # for STORENOC
+#         self.MMR4 = []
+#     # assume addr in int format
+#     def readMem(self,regVal,addr):
+#         if()
+
+
 def printState(state, cycle):
     with open ("snapshot.txt", "a") as snap:
         snap.write("cycle " + str(cycle) + "\t\n")
