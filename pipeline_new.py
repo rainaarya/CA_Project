@@ -109,7 +109,8 @@ class RegisterFile:
     
 
 class IMem:
-    def __init__(self):
+    def __init__(self,x=1):
+        self.x=x
         self.IMem = [bitarray(8) for i in range(MemSize)]
         #initialize to 0
         for i in range(MemSize):
@@ -133,7 +134,8 @@ class IMem:
 
 
 class DMem:
-    def __init__(self):
+    def __init__(self,x=1):
+        self.x=x
         self.DMem = [bitarray(8) for i in range(MemSize)]
         #initialize to 0
         for i in range(MemSize):
