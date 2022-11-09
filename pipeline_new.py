@@ -270,270 +270,282 @@ def signextend(bits):
         bits = '0' * (32 - len(bits)) + bits
     return bitarray(bits)
 
-def main():
-    RF = RegisterFile()
-    DM = DMem()
 
-    # read instructions from instructions.txt and store in imem.txt by having 8 bits per line
-    with open("instructions.txt", "r") as inst:
-        with open("imem.txt", "w") as imem:
-            for line in inst:
-                imem.write(line[:8])
-                imem.write("\n")
-                imem.write(line[8:16])
-                imem.write("\n")
-                imem.write(line[16:24])
-                imem.write("\n")
-                imem.write(line[24:32])
-                imem.write("\n")
-    mmr=MMR()
-    IM = IMem()
-    state = stateClass()
-    newstate = stateClass()
+class CPU():
+    def __init__(self,cycle):
+        self.cycle = cycle
+    
+    def run(self):
+        RF = RegisterFile()
+        DM = DMem()
 
-    state.IF.nop = False # initially only IF stage should execute
+        # read instructions from instructions.txt and store in imem.txt by having 8 bits per line
+        with open("instructions.txt", "r") as inst:
+            with open("imem.txt", "w") as imem:
+                for line in inst:
+                    imem.write(line[:8])
+                    imem.write("\n")
+                    imem.write(line[8:16])
+                    imem.write("\n")
+                    imem.write(line[16:24])
+                    imem.write("\n")
+                    imem.write(line[24:32])
+                    imem.write("\n")
+        mmr=MMR()
+        IM = IMem()
+        state = stateClass()
+        newstate = stateClass()
 
-    # copy values of state to newstate
-    newstate = copy.deepcopy(state)
+        state.IF.nop = False # initially only IF stage should execute
 
-    cycle = 1
+        # copy values of state to newstate
+        newstate = copy.deepcopy(state)
 
-    while True:
-        # WB stage
-        if not state.WB.nop:
-            if state.WB.wrt_enable:
-                #print("WB stage")
-                RF.writeRF(state.WB.Rd, state.WB.Wrt_data)
-        
-        
-        # MEM stage
-        if not state.MEM.nop:
-            if state.MEM.rd_mem:
-                newstate.WB.Wrt_data = DM.readDataMem(state.MEM.ALUresult)
-            elif state.MEM.wrt_mem:
-                if state.MEM.is_P_type:
-                    print("state.MEM.alu_op[7:10] = ",state.MEM.alu_op[7:10])
-                    if state.MEM.alu_op[7:10] == bitarray('111'):
-                        mmr.writeMem(ba2int(RF.readRF(state.MEM.Rd)) , ba2int(state.MEM.Imm) + ba2int(RF.readRF(state.MEM.Rs1)) )
-                    if state.MEM.alu_op[7:10] == bitarray('000'):
-                        mmr.storeMem()
-                else:
-                    DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
-                    print("MEM stage", state.MEM.ALUresult, state.MEM.Store_data)
-            else: 
-                newstate.WB.Wrt_data = state.MEM.ALUresult
+        cycle = self.cycle
 
-            newstate.WB.Rs1 = state.MEM.Rs1
-            newstate.WB.Rs2 = state.MEM.Rs2
-            newstate.WB.Rd = state.MEM.Rd
-            newstate.WB.wrt_enable = state.MEM.wrt_enable
-
-        newstate.WB.nop = state.MEM.nop
-
-        # EX stage
-        if not state.EX.nop:
-
-            if state.EX.is_I_type:
-                if state.EX.alu_op[7:10] == bitarray('000'):
-                    signext=signextend(state.EX.Imm)
-                    newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32)
+        while True:
+            # WB stage
+            if not state.WB.nop:
+                if state.WB.wrt_enable:
+                    #print("WB stage")
+                    RF.writeRF(state.WB.Rd, state.WB.Wrt_data)
             
-            if state.EX.is_R_type:
-                if state.EX.alu_op[7:10] == bitarray('000'):
-                    if state.EX.alu_op[0:7] == bitarray('0000000'):
-                        newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(state.EX.Read_data2)) % (2**32), length=32)
-                    elif state.EX.alu_op[0:7] == bitarray('0100000'):
-                        newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) - ba2int(state.EX.Read_data2)) % (2**32), length=32)
-                #elif for AND and OR
-                elif state.EX.alu_op[7:10] == bitarray('111') or state.EX.alu_op[7:10] == bitarray('110'):
-                    if state.EX.alu_op[7:10] == bitarray('111'):
-                        newstate.MEM.ALUresult = state.EX.Read_data1 & state.EX.Read_data2
-                    elif state.EX.alu_op[7:10] == bitarray('110'):
-                        newstate.MEM.ALUresult = state.EX.Read_data1 | state.EX.Read_data2
-                
-                #elif for SLL
-                elif state.EX.alu_op[7:10] == bitarray('001'):
-                    newstate.MEM.ALUresult = state.EX.Read_data1 << ba2int(state.EX.Read_data2)
-                
-                #elif for SRA
-                elif state.EX.alu_op[7:10] == bitarray('101'):
-                    if state.EX.alu_op[0:7] == bitarray('0100000'):
-                        msb=state.EX.Read_data1[0]
-                        newbits=state.EX.Read_data1 >> ba2int(state.EX.Read_data2)
-                        for i in range(ba2int(state.EX.Read_data2)):
-                            newbits[i]=msb
-                        newstate.MEM.ALUresult=newbits     
-
-            if state.EX.is_L_type:
-                if state.EX.alu_op[7:10] == bitarray('010'):
-                    signext=signextend(state.EX.Imm)
-                    newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32)
             
-            if state.EX.is_S_type:
-                if state.EX.alu_op[7:10] == bitarray('010'):
-                    signext=signextend(state.EX.Imm)
-                    newstate.MEM.Store_data = state.EX.Read_data2 # this is the data to be stored in memory (rs2)
-                    newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32) # this is the address to store the data at (rs1 + imm-offset)
-            
-            if state.EX.is_B_type:
-                if state.EX.alu_op[7:10] == bitarray('000'):
-                    signext=signextend(state.EX.Imm+bitarray('0')) # add 0 to the end of the immediate to make it 13 bits
-                    if state.EX.Read_data1 == state.EX.Read_data2:
-                        newstate.MEM.nop = False
-                        newstate.EX.nop = True
-                        newstate.ID.nop = True
-
-                        newstate.IF.pc= int2ba((ba2int(state.IF.pc) + ba2int(signext) - 8), length=32) # -8 because PC is incremented by 4 when the branch instruc is in IF stage and again by 4 when it is in ID stage. So we need to subtract 2*4=8 to get the correct PC value
-                        newstate.IF.nop = False
-
-                        print("Branch taken")
-                        newstate.MEM.rd_mem = state.EX.rd_mem
-                        newstate.MEM.wrt_mem = state.EX.wrt_mem
-                        newstate.MEM.Rs1 = state.EX.Rs1
-                        newstate.MEM.Rs2 = state.EX.Rs2
-                        newstate.MEM.Rd = state.EX.Rd
-                        newstate.MEM.wrt_enable = state.EX.wrt_enable
-                        newstate.MEM.ALUresult = bitarray('00000000000000000000000000000000') # dummy value, not actually used or needed
-
-                        printState(newstate, cycle)
-                        state = newstate
-                        cycle += 1
-                        continue
+            # MEM stage
+            if not state.MEM.nop:
+                if state.MEM.rd_mem:
+                    newstate.WB.Wrt_data = DM.readDataMem(state.MEM.ALUresult)
+                elif state.MEM.wrt_mem:
+                    if state.MEM.is_P_type:
+                        print("state.MEM.alu_op[7:10] = ",state.MEM.alu_op[7:10])
+                        if state.MEM.alu_op[7:10] == bitarray('111'):
+                            mmr.writeMem(ba2int(RF.readRF(state.MEM.Rd)) , ba2int(state.MEM.Imm) + ba2int(RF.readRF(state.MEM.Rs1)) )
+                        if state.MEM.alu_op[7:10] == bitarray('000'):
+                            mmr.storeMem()
                     else:
-                        print("Branch not taken")
+                        DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
+                        print("MEM stage", state.MEM.ALUresult, state.MEM.Store_data)
+                else: 
+                    newstate.WB.Wrt_data = state.MEM.ALUresult
 
-            if state.EX.is_P_type:
-                newstate.MEM.is_P_type = True
-                newstate.MEM.alu_op = state.EX.alu_op
-                newstate.MEM.Imm = state.EX.Imm
+                newstate.WB.Rs1 = state.MEM.Rs1
+                newstate.WB.Rs2 = state.MEM.Rs2
+                newstate.WB.Rd = state.MEM.Rd
+                newstate.WB.wrt_enable = state.MEM.wrt_enable
+
+            newstate.WB.nop = state.MEM.nop
+
+            # EX stage
+            if not state.EX.nop:
+
+                if state.EX.is_I_type:
+                    if state.EX.alu_op[7:10] == bitarray('000'):
+                        signext=signextend(state.EX.Imm)
+                        newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32)
                 
-            newstate.MEM.rd_mem = state.EX.rd_mem
-            newstate.MEM.wrt_mem = state.EX.wrt_mem
-            newstate.MEM.Rs1 = state.EX.Rs1
-            newstate.MEM.Rs2 = state.EX.Rs2
-            newstate.MEM.Rd = state.EX.Rd
-            newstate.MEM.wrt_enable = state.EX.wrt_enable
+                if state.EX.is_R_type:
+                    if state.EX.alu_op[7:10] == bitarray('000'):
+                        if state.EX.alu_op[0:7] == bitarray('0000000'):
+                            newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(state.EX.Read_data2)) % (2**32), length=32)
+                        elif state.EX.alu_op[0:7] == bitarray('0100000'):
+                            newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) - ba2int(state.EX.Read_data2)) % (2**32), length=32)
+                    #elif for AND and OR
+                    elif state.EX.alu_op[7:10] == bitarray('111') or state.EX.alu_op[7:10] == bitarray('110'):
+                        if state.EX.alu_op[7:10] == bitarray('111'):
+                            newstate.MEM.ALUresult = state.EX.Read_data1 & state.EX.Read_data2
+                        elif state.EX.alu_op[7:10] == bitarray('110'):
+                            newstate.MEM.ALUresult = state.EX.Read_data1 | state.EX.Read_data2
+                    
+                    #elif for SLL
+                    elif state.EX.alu_op[7:10] == bitarray('001'):
+                        newstate.MEM.ALUresult = state.EX.Read_data1 << ba2int(state.EX.Read_data2)
+                    
+                    #elif for SRA
+                    elif state.EX.alu_op[7:10] == bitarray('101'):
+                        if state.EX.alu_op[0:7] == bitarray('0100000'):
+                            msb=state.EX.Read_data1[0]
+                            newbits=state.EX.Read_data1 >> ba2int(state.EX.Read_data2)
+                            for i in range(ba2int(state.EX.Read_data2)):
+                                newbits[i]=msb
+                            newstate.MEM.ALUresult=newbits     
 
-        newstate.MEM.nop = state.EX.nop
-        
+                if state.EX.is_L_type:
+                    if state.EX.alu_op[7:10] == bitarray('010'):
+                        signext=signextend(state.EX.Imm)
+                        newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32)
+                
+                if state.EX.is_S_type:
+                    if state.EX.alu_op[7:10] == bitarray('010'):
+                        signext=signextend(state.EX.Imm)
+                        newstate.MEM.Store_data = state.EX.Read_data2 # this is the data to be stored in memory (rs2)
+                        newstate.MEM.ALUresult = int2ba((ba2int(state.EX.Read_data1) + ba2int(signext)) % (2**32), length=32) # this is the address to store the data at (rs1 + imm-offset)
+                
+                if state.EX.is_B_type:
+                    if state.EX.alu_op[7:10] == bitarray('000'):
+                        signext=signextend(state.EX.Imm+bitarray('0')) # add 0 to the end of the immediate to make it 13 bits
+                        if state.EX.Read_data1 == state.EX.Read_data2:
+                            newstate.MEM.nop = False
+                            newstate.EX.nop = True
+                            newstate.ID.nop = True
 
-        # ID stage
-        if not state.ID.nop:
-            instruction = state.ID.instr
-            opcode = instruction[25:32]
-            funct3 = instruction[17:20]
-            funct7 = instruction[0:7]
-            Rd = instruction[20:25]
-            Rs1 = instruction[12:17]
-            Rs2 = instruction[7:12]
-            Imm = instruction[0:12]
+                            newstate.IF.pc= int2ba((ba2int(state.IF.pc) + ba2int(signext) - 8), length=32) # -8 because PC is incremented by 4 when the branch instruc is in IF stage and again by 4 when it is in ID stage. So we need to subtract 2*4=8 to get the correct PC value
+                            newstate.IF.nop = False
+
+                            print("Branch taken")
+                            newstate.MEM.rd_mem = state.EX.rd_mem
+                            newstate.MEM.wrt_mem = state.EX.wrt_mem
+                            newstate.MEM.Rs1 = state.EX.Rs1
+                            newstate.MEM.Rs2 = state.EX.Rs2
+                            newstate.MEM.Rd = state.EX.Rd
+                            newstate.MEM.wrt_enable = state.EX.wrt_enable
+                            newstate.MEM.ALUresult = bitarray('00000000000000000000000000000000') # dummy value, not actually used or needed
+
+                            printState(newstate, cycle)
+                            state = newstate
+                            cycle += 1
+                            continue
+                        else:
+                            print("Branch not taken")
+
+                if state.EX.is_P_type:
+                    newstate.MEM.is_P_type = True
+                    newstate.MEM.alu_op = state.EX.alu_op
+                    newstate.MEM.Imm = state.EX.Imm
+                    
+                newstate.MEM.rd_mem = state.EX.rd_mem
+                newstate.MEM.wrt_mem = state.EX.wrt_mem
+                newstate.MEM.Rs1 = state.EX.Rs1
+                newstate.MEM.Rs2 = state.EX.Rs2
+                newstate.MEM.Rd = state.EX.Rd
+                newstate.MEM.wrt_enable = state.EX.wrt_enable
+
+            newstate.MEM.nop = state.EX.nop
             
-            RType = opcode == int2ba(51, 7)
-            IType = opcode == int2ba(19, 7)
-            BType = opcode == int2ba(99, 7)
-            SType = opcode == int2ba(35, 7)
-            LType = opcode == int2ba(3, 7)
-            PType = opcode == int2ba(55, 7)
 
-            newstate.EX.is_I_type = IType
-            newstate.EX.is_R_type = RType
-            newstate.EX.is_B_type = BType
-            newstate.EX.is_S_type = SType
-            newstate.EX.is_L_type = LType
-            newstate.EX.is_P_type = PType
+            # ID stage
+            if not state.ID.nop:
+                instruction = state.ID.instr
+                opcode = instruction[25:32]
+                funct3 = instruction[17:20]
+                funct7 = instruction[0:7]
+                Rd = instruction[20:25]
+                Rs1 = instruction[12:17]
+                Rs2 = instruction[7:12]
+                Imm = instruction[0:12]
+                
+                RType = opcode == int2ba(51, 7)
+                IType = opcode == int2ba(19, 7)
+                BType = opcode == int2ba(99, 7)
+                SType = opcode == int2ba(35, 7)
+                LType = opcode == int2ba(3, 7)
+                PType = opcode == int2ba(55, 7)
 
-            if RType:
-                newstate.EX.alu_op = funct7 + funct3
-                newstate.EX.rd_mem = False
-                newstate.EX.wrt_mem = False
-                newstate.EX.wrt_enable = True
-                newstate.EX.Rd = Rd
-                newstate.EX.Rs1 = Rs1
-                newstate.EX.Rs2 = Rs2
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Read_data2 = RF.readRF(Rs2)
-            elif IType:
-                newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.rd_mem = False
-                newstate.EX.wrt_mem = False
-                newstate.EX.wrt_enable = True
-                newstate.EX.Rd = Rd
-                newstate.EX.Rs1 = Rs1
-                #newstate.EX.Rs2 = Rs2
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Imm = Imm
-            elif LType:
-                newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.rd_mem = True
-                newstate.EX.wrt_mem = False
-                newstate.EX.wrt_enable = True
-                newstate.EX.Rd = Rd
-                newstate.EX.Rs1 = Rs1
-                #newstate.EX.Rs2 = Rs2
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Imm = Imm
-            elif SType:
-                newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.rd_mem = False
-                newstate.EX.wrt_mem = True
-                newstate.EX.wrt_enable = False
-                #newstate.EX.Rd = Rd
-                newstate.EX.Rs1 = Rs1
-                newstate.EX.Rs2 = Rs2
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Read_data2 = RF.readRF(Rs2)
-                newstate.EX.Imm = instruction[0:7] + instruction[20:25]
+                newstate.EX.is_I_type = IType
+                newstate.EX.is_R_type = RType
+                newstate.EX.is_B_type = BType
+                newstate.EX.is_S_type = SType
+                newstate.EX.is_L_type = LType
+                newstate.EX.is_P_type = PType
+
+                if RType:
+                    newstate.EX.alu_op = funct7 + funct3
+                    newstate.EX.rd_mem = False
+                    newstate.EX.wrt_mem = False
+                    newstate.EX.wrt_enable = True
+                    newstate.EX.Rd = Rd
+                    newstate.EX.Rs1 = Rs1
+                    newstate.EX.Rs2 = Rs2
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Read_data2 = RF.readRF(Rs2)
+                elif IType:
+                    newstate.EX.alu_op = bitarray('0000000') + funct3
+                    newstate.EX.rd_mem = False
+                    newstate.EX.wrt_mem = False
+                    newstate.EX.wrt_enable = True
+                    newstate.EX.Rd = Rd
+                    newstate.EX.Rs1 = Rs1
+                    #newstate.EX.Rs2 = Rs2
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Imm = Imm
+                elif LType:
+                    newstate.EX.alu_op = bitarray('0000000') + funct3
+                    newstate.EX.rd_mem = True
+                    newstate.EX.wrt_mem = False
+                    newstate.EX.wrt_enable = True
+                    newstate.EX.Rd = Rd
+                    newstate.EX.Rs1 = Rs1
+                    #newstate.EX.Rs2 = Rs2
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Imm = Imm
+                elif SType:
+                    newstate.EX.alu_op = bitarray('0000000') + funct3
+                    newstate.EX.rd_mem = False
+                    newstate.EX.wrt_mem = True
+                    newstate.EX.wrt_enable = False
+                    #newstate.EX.Rd = Rd
+                    newstate.EX.Rs1 = Rs1
+                    newstate.EX.Rs2 = Rs2
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Read_data2 = RF.readRF(Rs2)
+                    newstate.EX.Imm = instruction[0:7] + instruction[20:25]
+                
+                # write code for branch
+                elif BType:
+                    newstate.EX.alu_op = bitarray('0000000') + funct3
+                    newstate.EX.rd_mem = False
+                    newstate.EX.wrt_mem = False
+                    newstate.EX.wrt_enable = False
+                    newstate.EX.Rs1 = Rs1
+                    newstate.EX.Rs2 = Rs2
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Read_data2 = RF.readRF(Rs2)
+                    newstate.EX.Imm = bitarray(instruction[0]) + bitarray(instruction[24]) + instruction[1:7] + instruction[20:24] # + bitarray('0')
+
+                # peripheral type
+                elif PType:
+                    newstate.EX.alu_op = bitarray('0000000') + funct3
+                    newstate.EX.rd_mem = False
+                    newstate.EX.wrt_mem = True
+                    newstate.EX.wrt_enable = False
+                    newstate.EX.Rd = Rd
+                    newstate.EX.Rs1 = Rs1
+                    newstate.EX.Read_data1 = RF.readRF(Rs1)
+                    newstate.EX.Imm = Imm
+
+            newstate.EX.nop = state.ID.nop
             
-            # write code for branch
-            elif BType:
-                newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.rd_mem = False
-                newstate.EX.wrt_mem = False
-                newstate.EX.wrt_enable = False
-                newstate.EX.Rs1 = Rs1
-                newstate.EX.Rs2 = Rs2
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Read_data2 = RF.readRF(Rs2)
-                newstate.EX.Imm = bitarray(instruction[0]) + bitarray(instruction[24]) + instruction[1:7] + instruction[20:24] # + bitarray('0')
-
-            # peripheral type
-            elif PType:
-                newstate.EX.alu_op = bitarray('0000000') + funct3
-                newstate.EX.rd_mem = False
-                newstate.EX.wrt_mem = True
-                newstate.EX.wrt_enable = False
-                newstate.EX.Rd = Rd
-                newstate.EX.Rs1 = Rs1
-                newstate.EX.Read_data1 = RF.readRF(Rs1)
-                newstate.EX.Imm = Imm
-
-        newstate.EX.nop = state.ID.nop
-        
-        # IF stage
-        if not state.IF.nop:
-            newstate.ID.instr = IM.readInstr(state.IF.pc)
-            newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
-            if newstate.ID.instr.to01() == '11111111111111111111111111111111':
-                newstate.IF.pc=state.IF.pc
-                newstate.ID.nop = True
-                newstate.IF.nop = True
-        
-        newstate.ID.nop = state.IF.nop
+            # IF stage
+            if not state.IF.nop:
+                newstate.ID.instr = IM.readInstr(state.IF.pc)
+                newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
+                if newstate.ID.instr.to01() == '11111111111111111111111111111111':
+                    newstate.IF.pc=state.IF.pc
+                    newstate.ID.nop = True
+                    newstate.IF.nop = True
             
-        if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
-            printState(newstate,cycle)
-            break
+            newstate.ID.nop = state.IF.nop
+                
+            if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
+                printState(newstate,cycle)
+                break
 
-        printState(newstate, cycle)
-        state = newstate
-        RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
-        DM.outputDataMem(cycle)  # dump data mem
-        mmr.outputDataMem(cycle)
-        cycle += 1
+            printState(newstate, cycle)
+            state = newstate
+            mmr.outputDataMem(cycle)
+            DM.outputDataMem(cycle)  # dump data mem
+            RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
+            cycle += 1
+        self.cycle = cycle
+        # print("memory mapped registers = ",'\n',mmr)        
 
-    # print("memory mapped registers = ",'\n',mmr)
+
+def main():
+    clock =1
+    cpu = CPU(clock)
+    cpu.run()
     print("machine halted")
-    print("total of ", cycle, " cycles executed")
+    print("total of ", cpu.cycle, " cycles executed")
+
 
 if __name__ == "__main__":
     main()
