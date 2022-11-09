@@ -1,0 +1,7 @@
+Cycle :	30	
+MMR0: 	[] 
+ MMR1: 	[] 
+ MMR2: 	[1] 
+ MMR3: 	[] 
+ MMR4: 	[1] 
+ 

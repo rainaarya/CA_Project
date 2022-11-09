@@ -1,22 +1,28 @@
-addi r10 r2 677
-addi r11 r4 677
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-beq r10 r11 12
-useful addi instruction
-useful addi instruction
-useful addi instruction
-useful addi instruction
-useful addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
-random addi instruction
+addi r2 r1 3
+addi r4 r3 2
+add1 r5 r1 5
+addi r6 r3 1
+addi r12 r3 1
+addi r3 r1 4
+add r1 r2 r2
+sub r4 r2 r7
+and r8 r5 r2
+or r9 r5 r2
+beq r12 r6 8
+sw r6 4(r5)
+add r13 r2 r1 
+add r14 r1 r2 
+sub r15 r1 r2 
+addi r16 r0 9 
+sub r17 r1 r6 
+lw r7 4(r5)
+sll r10 r2 r12
+sra r11 r3 r4
+loadnoc r8 r25 #8
+sub r2 r2 r2
+sub r3 r3 r3
+sub r4 r4 r4
+sub r5 r5 r5
+sub r8 r8 r8 
+sendnoc
 halt
-
