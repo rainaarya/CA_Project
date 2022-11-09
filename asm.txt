@@ -8,6 +8,7 @@ add r1 r2 r2
 sub r4 r2 r7
 and r8 r5 r2
 or r9 r5 r2
+beq r12 r6 8
 sw r6 4(r5)
 add r13 r2 r1 
 add r14 r1 r2 
@@ -17,9 +18,10 @@ sub r17 r1 r6
 lw r7 4(r5)
 sll r10 r2 r12
 sra r11 r3 r4
+loadnoc r8 r25 #8
 sub r2 r2 r2
 sub r3 r3 r3
 sub r4 r4 r4
-beq r6 r7 8
 sub r5 r5 r5
 sub r8 r8 r8 
+sendnoc
