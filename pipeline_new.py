@@ -36,6 +36,7 @@ class EXClass:
         self.is_B_type = False
         self.is_S_type = False
         self.is_L_type = False
+        self.is_P_type = False
         self.rd_mem = False
         self.wrt_mem = False
         self.alu_op = bitarray(10)
@@ -88,6 +89,7 @@ class RegisterFile:
             self.Registers[i].setall(0)
         self.Reg_data = bitarray(32)
         self.Reg_data.setall(0)
+        self.Registers[25] = bitarray("00000000000000000100000000000000") # intializing register for LOADNOC etc
     
     def readRF(self, Reg_addr):
         self.Reg_data = self.Registers[ba2int(Reg_addr)]
@@ -163,18 +165,38 @@ class DMem:
                 dmemout.write(self.DMem[j].to01())
                 dmemout.write("\n")
 
-# class MMR :
-#     def __init__(self):
-#         # for LOADNOC
-#         self.MMR0 = []
-#         self.MMR1 = []
-#         self.MMR2 = []
-#         self.MMR3 = []
-#         # for STORENOC
-#         self.MMR4 = []
-#     # assume addr in int format
-#     def readMem(self,regVal,addr):
-#         if()
+class MMR :
+    def __init__(self):
+        # for LOADNOC
+        self.MMR0 = []
+        self.MMR1 = []
+        self.MMR2 = []
+        self.MMR3 = []
+        # for STORENOC
+        self.MMR4 = []
+    # assume addr in int format
+    def readMem(self,regVal,addr):
+        if(addr >= 16384 and addr <= 16387):
+            self.MMR0.append(regVal)
+        elif (addr >= 16388 and addr <= 16391):
+            self.MMR1.append(regVal)
+        elif (addr >= 16392 and addr <= 16395 ):
+            self.MMR2.append(regVal)
+        elif(addr >= 16396 and addr <= 16399):
+            self.MMR3.append(regVal)
+        else:
+            print("Invalid address")
+    
+    def storeMem(self):
+        self.MMR4.append(1)
+
+    def __repr__(self) -> str:
+        print("MMR0: " , self.MMR0)
+        print("MMR1: " , self.MMR1)
+        print("MMR2: " , self.MMR2)
+        print("MMR3: " , self.MMR3)
+        print("MMR4: " , self.MMR4)
+        return ""
 
 
 def printState(state, cycle):
@@ -198,6 +220,7 @@ def printState(state, cycle):
         snap.write("EX.is_R_type:\t" + str(state.EX.is_R_type) + "\t\n")
         snap.write("EX.is_B_type:\t" + str(state.EX.is_B_type) + "\t\n")
         snap.write("EX.is_S_type:\t" + str(state.EX.is_S_type) + "\t\n")
+        snap.write("EX.is_P_type:\t" + str(state.EX.is_P_type) + "\t\n")
         snap.write("EX.rd_mem:\t" + str(state.EX.rd_mem) + "\t\n")
         snap.write("EX.wrt_mem:\t" + str(state.EX.wrt_mem) + "\t\n")
         snap.write("EX.alu_op:\t" + state.EX.alu_op.to01() + "\t\n")
@@ -250,7 +273,7 @@ def main():
                 imem.write("\n")
                 imem.write(line[24:32])
                 imem.write("\n")
-
+    mmr=MMR()
     IM = IMem()
     state = stateClass()
     newstate = stateClass()
@@ -358,6 +381,13 @@ def main():
                         continue
                     else:
                         print("Branch not taken")
+
+            if state.EX.is_P_type:
+                print("state.EX.alu_op[7:10] = ",state.EX.alu_op[7:10])
+                if state.EX.alu_op[7:10] == bitarray('111'):
+                    mmr.readMem(ba2int(RF.readRF(state.EX.Rd)) , ba2int(state.EX.Imm) + ba2int(RF.readRF(state.EX.Rs1)) )
+                if state.EX.alu_op[7:10] == bitarray('000'):
+                    mmr.storeMem()
             
             newstate.MEM.rd_mem = state.EX.rd_mem
             newstate.MEM.wrt_mem = state.EX.wrt_mem
@@ -385,12 +415,14 @@ def main():
             BType = opcode == int2ba(99, 7)
             SType = opcode == int2ba(35, 7)
             LType = opcode == int2ba(3, 7)
+            PType = opcode == int2ba(55, 7)
 
             newstate.EX.is_I_type = IType
             newstate.EX.is_R_type = RType
             newstate.EX.is_B_type = BType
             newstate.EX.is_S_type = SType
             newstate.EX.is_L_type = LType
+            newstate.EX.is_P_type = PType
 
             if RType:
                 newstate.EX.alu_op = funct7 + funct3
@@ -446,6 +478,17 @@ def main():
                 newstate.EX.Read_data2 = RF.readRF(Rs2)
                 newstate.EX.Imm = bitarray(instruction[0]) + bitarray(instruction[24]) + instruction[1:7] + instruction[20:24] # + bitarray('0')
 
+            # peripheral type
+            elif PType:
+                newstate.EX.alu_op = bitarray('0000000') + funct3
+                newstate.EX.rd_mem = True # not sure, check
+                newstate.EX.wrt_mem = False
+                newstate.EX.wrt_enable = False
+                newstate.EX.Rd = Rd
+                newstate.EX.Rs1 = Rs1
+                newstate.EX.Read_data1 = RF.readRF(Rs1)
+                newstate.EX.Imm = Imm
+
         newstate.EX.nop = state.ID.nop
         
         # IF stage
@@ -467,6 +510,7 @@ def main():
         state = newstate
         cycle += 1
 
+    print("memory mapped registers = ",'\n',mmr)
     print("machine halted")
     print("total of ", cycle, " cycles executed")
     RF.outputRF()  # dump RF; uncomment to write RF to file
