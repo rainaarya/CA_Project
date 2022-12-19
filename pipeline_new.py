@@ -24,6 +24,7 @@ class IDClass:
         self.instr= bitarray(32)
         self.instr.setall(0)
         self.nop = True
+        self.pc = bitarray(32)
 
 class EXClass:
     def __init__(self):
@@ -53,6 +54,7 @@ class EXClass:
         self.alu_op.setall(0)
         self.wrt_enable = False
         self.nop = True
+        self.pc = bitarray(32)
 
 class MEMClass:
     def __init__(self):
@@ -71,8 +73,14 @@ class MEMClass:
         self.rd_mem = False
         self.wrt_mem = False
         self.wrt_enable = False
-        self.is_P_type = False
         self.nop = True
+        self.is_I_type = False
+        self.is_R_type = False
+        self.is_B_type = False
+        self.is_S_type = False
+        self.is_L_type = False
+        self.is_P_type = False
+        self.pc = bitarray(32)
     
 class WBClass:
     def __init__(self):
@@ -88,6 +96,13 @@ class WBClass:
         self.Rd.setall(0)
         self.wrt_enable = False
         self.nop = True
+        self.is_I_type = False
+        self.is_R_type = False
+        self.is_B_type = False
+        self.is_S_type = False
+        self.is_L_type = False
+        self.is_P_type = False
+        self.pc = bitarray(32)
 
 class stateClass:
     def __init__(self):
@@ -258,10 +273,12 @@ def printState(state, cycle):
         snap.write("IF.PC:\t" + state.IF.pc.to01() + "\t\n")
         snap.write("IF.nop:\t" + str(state.IF.nop) + "\t\n")
         # ID stage
+        snap.write("ID.PC:\t" + state.ID.pc.to01() + "\t\n")
         snap.write("ID.instr:\t" + state.ID.instr.to01() + "\t\n")
         snap.write("ID.nop:\t" + str(state.ID.nop) + "\t\n")
 
         # EX stage
+        snap.write("EX.PC:\t" + state.EX.pc.to01() + "\t\n")
         snap.write("EX.instr:\t" + state.EX.instr.to01() + "\t\n")
         snap.write("EX.Read_data1:\t" + state.EX.Read_data1.to01() + "\t\n")
         snap.write("EX.Read_data2:\t" + state.EX.Read_data2.to01() + "\t\n")
@@ -282,6 +299,7 @@ def printState(state, cycle):
         snap.write("EX.nop:\t" + str(state.EX.nop) + "\t\n")
 
         # MEM stage
+        snap.write("MEM.PC:\t" + state.MEM.pc.to01() + "\t\n")
         snap.write("MEM.instr:\t" + state.MEM.instr.to01() + "\t\n")
         snap.write("MEM.ALUresult:\t" + state.MEM.ALUresult.to01() + "\t\n")
         snap.write("MEM.Store_data:\t" + state.MEM.Store_data.to01() + "\t\n")
@@ -291,15 +309,28 @@ def printState(state, cycle):
         snap.write("MEM.rd_mem:\t" + str(state.MEM.rd_mem) + "\t\n")
         snap.write("MEM.wrt_mem:\t" + str(state.MEM.wrt_mem) + "\t\n")
         snap.write("MEM.wrt_enable:\t" + str(state.MEM.wrt_enable) + "\t\n")
+        snap.write("MEM.is_I_type:\t" + str(state.MEM.is_I_type) + "\t\n")
+        snap.write("MEM.is_R_type:\t" + str(state.MEM.is_R_type) + "\t\n")
+        snap.write("MEM.is_B_type:\t" + str(state.MEM.is_B_type) + "\t\n")
+        snap.write("MEM.is_S_type:\t" + str(state.MEM.is_S_type) + "\t\n")
+        snap.write("MEM.is_L_type:\t" + str(state.MEM.is_L_type) + "\t\n")
+        snap.write("MEM.is_P_type:\t" + str(state.MEM.is_P_type) + "\t\n")
         snap.write("MEM.nop:\t" + str(state.MEM.nop) + "\t\n")
 
         # WB stage        
+        snap.write("WB.PC:\t" + state.WB.pc.to01() + "\t\n")       
         snap.write("WB.instr:\t" + state.WB.instr.to01() + "\t\n")
         snap.write("WB.Wrt_data:\t" + state.WB.Wrt_data.to01() + "\t\n")
         snap.write("WB.Rs2:\t" + state.WB.Rs2.to01() + "\t\n")
         snap.write("WB.Rs1:\t" + state.WB.Rs1.to01() + "\t\n")
         snap.write("WB.Rd:\t" + state.WB.Rd.to01() + "\t\n")
         snap.write("WB.wrt_enable:\t" + str(state.WB.wrt_enable) + "\t\n")
+        snap.write("WB.is_I_type:\t" + str(state.WB.is_I_type) + "\t\n")
+        snap.write("WB.is_R_type:\t" + str(state.WB.is_R_type) + "\t\n")
+        snap.write("WB.is_B_type:\t" + str(state.WB.is_B_type) + "\t\n")
+        snap.write("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
+        snap.write("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
+        snap.write("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
         snap.write("WB.nop:\t" + str(state.WB.nop) + "\t\n")
 
         if (check_PC != state.IF.pc):
@@ -416,6 +447,13 @@ class CPU():
                 newstate.WB.Rd = state.MEM.Rd
                 newstate.WB.wrt_enable = state.MEM.wrt_enable
                 newstate.WB.instr = state.MEM.instr
+                newstate.WB.is_I_type = newstate.MEM.is_I_type
+                newstate.WB.is_R_type = newstate.MEM.is_R_type
+                newstate.WB.is_B_type = newstate.MEM.is_B_type
+                newstate.WB.is_S_type = newstate.MEM.is_S_type
+                newstate.WB.is_L_type = newstate.MEM.is_L_type
+                newstate.WB.is_P_type = newstate.MEM.is_P_type
+                newstate.WB.pc = state.MEM.pc
 
             newstate.WB.nop = state.MEM.nop
 
@@ -578,10 +616,14 @@ class CPU():
                 newstate.MEM.Rd = state.EX.Rd
                 newstate.MEM.wrt_enable = state.EX.wrt_enable
                 newstate.MEM.instr = state.EX.instr
-
+                newstate.MEM.is_I_type = newstate.EX.is_I_type
+                newstate.MEM.is_R_type = newstate.EX.is_R_type
+                newstate.MEM.is_B_type = newstate.EX.is_B_type
+                newstate.MEM.is_S_type = newstate.EX.is_S_type
+                newstate.MEM.is_L_type = newstate.EX.is_L_type
+                newstate.MEM.is_P_type = newstate.EX.is_P_type
+                newstate.MEM.pc = state.EX.pc
             newstate.MEM.nop = state.EX.nop
-            
-
             # ID stage
             if not state.ID.nop:
                 instruction = state.ID.instr
@@ -732,8 +774,7 @@ class CPU():
                     newstate.EX.Read_data1 = RF.readRF(Rs1)
                     newstate.EX.Imm = Imm
 
-
-
+                newstate.EX.pc = state.ID.pc
                     # if (state.EX.Rd == Rs1 or stzate.EX.Rd == Rs2):
                     #     newstate.EX.nop = True
                     #     newstate.ID = state.ID
@@ -764,6 +805,7 @@ class CPU():
                     continue
                 else:
                     newstate.ID.instr = instr
+                    newstate.ID.pc = state.IF.pc
                     newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
                     if newstate.ID.instr.to01() == '11111111111111111111111111111111':
                         newstate.IF.pc=state.IF.pc
@@ -773,18 +815,17 @@ class CPU():
             newstate.ID.nop = state.IF.nop
                 
             if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
-                cycle+=1
                 printState(newstate,cycle)
                 mmr.outputDataMem(cycle)
                 DM.outputDataMem(cycle)  # dump data mem
                 RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
                 break
             printState(newstate, cycle)
-            cycle += 1
             state = newstate
             mmr.outputDataMem(cycle)
             DM.outputDataMem(cycle)  # dump data mem
             RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
+            cycle += 1
         self.cycle = cycle
         # print("memory mapped registers = ",'\n',mmr)        
 
