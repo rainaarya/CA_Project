@@ -263,7 +263,6 @@ def printState(state, cycle):
         # IF stage
         snap.write("IF.PC:\t" + state.IF.pc.to01() + "\t\n")
         snap.write("IF.nop:\t" + str(state.IF.nop) + "\t\n")
-        snap.write("IF.instr:\t" + state.IF.instr.to01() + "\t\n")
         # ID stage
         snap.write("ID.instr:\t" + state.ID.instr.to01() + "\t\n")
         snap.write("ID.nop:\t" + str(state.ID.nop) + "\t\n")
@@ -365,13 +364,9 @@ class CPU():
         newstate = stateClass()
 
         state.IF.nop = False # initially only IF stage should execute
-        state.IF.instr = IM.readInstr(state.IF.pc)
         # copy values of state to newstate
-        newstate = copy.deepcopy(state)
-
         cycle = 1
-        printState(state, cycle)
-
+        newstate = copy.deepcopy(state)
         while True:
             # WB stage
             if not state.WB.nop:
@@ -710,7 +705,7 @@ class CPU():
             # IF stage
             if not state.IF.nop:
                 (status,instr) = IM.readInstr(state.IF.pc)
-                if(status == 0):
+                if(status == 0):     
                     newstate.IF =state.IF
                     newstate.ID.nop = True
                     printState(newstate, cycle)
@@ -718,12 +713,11 @@ class CPU():
                     mmr.outputDataMem(cycle)
                     DM.outputDataMem(cycle)  # dump data mem
                     RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
-                    cycle += 1                      
+                    cycle += 1
                     continue
                 else:
                     newstate.ID.instr = instr
                     newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
-                    newstate.IF.instr = IM.readInstr(newstate.IF.pc)
                     if newstate.ID.instr.to01() == '11111111111111111111111111111111':
                         newstate.IF.pc=state.IF.pc
                         newstate.ID.nop = True
@@ -735,9 +729,8 @@ class CPU():
                 cycle+=1
                 printState(newstate,cycle)
                 break
-
-            cycle += 1
             printState(newstate, cycle)
+            cycle += 1
             state = newstate
             mmr.outputDataMem(cycle)
             DM.outputDataMem(cycle)  # dump data mem
@@ -747,7 +740,7 @@ class CPU():
 
 
 def main():
-    x = 0
+    x = 1
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
