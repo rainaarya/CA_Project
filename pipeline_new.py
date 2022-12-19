@@ -333,13 +333,22 @@ def printState(state, cycle):
         snap.write("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
         snap.write("WB.nop:\t" + str(state.WB.nop) + "\t\n")
 
-        if (check_PC != state.IF.pc):
+        if (check_PC != state.WB.pc):
+            print("WB.is_I_type:\t" + str(state.WB.is_I_type) + "\t\n")
+            print("WB.is_R_type:\t" + str(state.WB.is_R_type) + "\t\n")
+            print("WB.is_B_type:\t" + str(state.WB.is_B_type) + "\t\n")
+            print("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
+            print("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
+            print("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
             # increment total_mem_instr if Ex.is_Ptype is true
-            if (state.EX.is_P_type or state.EX.is_L_type or state.EX.is_S_type):
+            if (state.WB.is_P_type or state.WB.is_L_type or state.WB.is_S_type):
                 total_mem_instr += 1
-            elif (state.EX.is_I_type or state.EX.is_R_type or state.EX.is_B_type):
+                check_PC = state.WB.pc
+            elif (state.WB.is_I_type or state.WB.is_R_type or state.WB.is_B_type):
+                if (state.WB.is_I_type):
+                    print("WB.PC:\t" + state.WB.pc.to01() + "\t\n")
                 total_reg_instr += 1
-        check_PC = state.IF.pc
+                check_PC = state.WB.pc
             
 def plot1():
     instr_type = ['Register', 'Memory']
@@ -460,6 +469,13 @@ class CPU():
             # EX stage
             if not state.EX.nop:
 
+                newstate.MEM.is_I_type = newstate.EX.is_I_type
+                newstate.MEM.is_R_type = newstate.EX.is_R_type
+                newstate.MEM.is_B_type = newstate.EX.is_B_type
+                newstate.MEM.is_S_type = newstate.EX.is_S_type
+                newstate.MEM.is_L_type = newstate.EX.is_L_type
+                newstate.MEM.is_P_type = newstate.EX.is_P_type
+                newstate.MEM.pc = state.EX.pc
                 # forwarding/bypassing logic
 
                 if state.MEM.nop == False and state.MEM.wrt_enable and state.MEM.rd_mem == False and state.MEM.wrt_mem == False:
@@ -616,13 +632,6 @@ class CPU():
                 newstate.MEM.Rd = state.EX.Rd
                 newstate.MEM.wrt_enable = state.EX.wrt_enable
                 newstate.MEM.instr = state.EX.instr
-                newstate.MEM.is_I_type = newstate.EX.is_I_type
-                newstate.MEM.is_R_type = newstate.EX.is_R_type
-                newstate.MEM.is_B_type = newstate.EX.is_B_type
-                newstate.MEM.is_S_type = newstate.EX.is_S_type
-                newstate.MEM.is_L_type = newstate.EX.is_L_type
-                newstate.MEM.is_P_type = newstate.EX.is_P_type
-                newstate.MEM.pc = state.EX.pc
             newstate.MEM.nop = state.EX.nop
             # ID stage
             if not state.ID.nop:
@@ -831,7 +840,7 @@ class CPU():
 
 
 def main():
-    x = 1
+    x = 0
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
