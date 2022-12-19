@@ -18,6 +18,7 @@ class IFClass:
         self.pc = bitarray(32)
         self.pc.setall(0)
         self.nop = True
+        self.isStalled = False
     
 class IDClass:
     def __init__(self):
@@ -25,6 +26,7 @@ class IDClass:
         self.instr.setall(0)
         self.nop = True
         self.pc = bitarray(32)
+        self.isStalled = False
 
 class EXClass:
     def __init__(self):
@@ -55,6 +57,7 @@ class EXClass:
         self.wrt_enable = False
         self.nop = True
         self.pc = bitarray(32)
+        self.isStalled = False
 
 class MEMClass:
     def __init__(self):
@@ -81,6 +84,7 @@ class MEMClass:
         self.is_L_type = False
         self.is_P_type = False
         self.pc = bitarray(32)
+        self.isStalled = False
     
 class WBClass:
     def __init__(self):
@@ -103,6 +107,7 @@ class WBClass:
         self.is_L_type = False
         self.is_P_type = False
         self.pc = bitarray(32)
+        self.isStalled = False
 
 class stateClass:
     def __init__(self):
@@ -272,10 +277,12 @@ def printState(state, cycle):
         # IF stage
         snap.write("IF.PC:\t" + state.IF.pc.to01() + "\t\n")
         snap.write("IF.nop:\t" + str(state.IF.nop) + "\t\n")
+        snap.write("IF.isStalled:\t" + str(state.IF.isStalled) + "\t\n")
         # ID stage
         snap.write("ID.PC:\t" + state.ID.pc.to01() + "\t\n")
         snap.write("ID.instr:\t" + state.ID.instr.to01() + "\t\n")
         snap.write("ID.nop:\t" + str(state.ID.nop) + "\t\n")
+        snap.write("ID.isStalled:\t" + str(state.ID.isStalled) + "\t\n")
 
         # EX stage
         snap.write("EX.PC:\t" + state.EX.pc.to01() + "\t\n")
@@ -296,6 +303,7 @@ def printState(state, cycle):
         snap.write("EX.wrt_mem:\t" + str(state.EX.wrt_mem) + "\t\n")
         snap.write("EX.alu_op:\t" + state.EX.alu_op.to01() + "\t\n")
         snap.write("EX.wrt_enable:\t" + str(state.EX.wrt_enable) + "\t\n")
+        snap.write("EX.isStalled:\t" + str(state.EX.isStalled) + "\t\n")
         snap.write("EX.nop:\t" + str(state.EX.nop) + "\t\n")
 
         # MEM stage
@@ -315,6 +323,7 @@ def printState(state, cycle):
         snap.write("MEM.is_S_type:\t" + str(state.MEM.is_S_type) + "\t\n")
         snap.write("MEM.is_L_type:\t" + str(state.MEM.is_L_type) + "\t\n")
         snap.write("MEM.is_P_type:\t" + str(state.MEM.is_P_type) + "\t\n")
+        snap.write("MEM.isStalled:\t" + str(state.MEM.isStalled) + "\t\n")
         snap.write("MEM.nop:\t" + str(state.MEM.nop) + "\t\n")
 
         # WB stage        
@@ -331,22 +340,23 @@ def printState(state, cycle):
         snap.write("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
         snap.write("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
         snap.write("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
+        snap.write("WB.isStalled:\t" + str(state.WB.isStalled) + "\t\n")
         snap.write("WB.nop:\t" + str(state.WB.nop) + "\t\n")
 
         if (check_PC != state.WB.pc):
-            print("WB.is_I_type:\t" + str(state.WB.is_I_type) + "\t\n")
-            print("WB.is_R_type:\t" + str(state.WB.is_R_type) + "\t\n")
-            print("WB.is_B_type:\t" + str(state.WB.is_B_type) + "\t\n")
-            print("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
-            print("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
-            print("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
+            # print("WB.is_I_type:\t" + str(state.WB.is_I_type) + "\t\n")
+            # print("WB.is_R_type:\t" + str(state.WB.is_R_type) + "\t\n")
+            # print("WB.is_B_type:\t" + str(state.WB.is_B_type) + "\t\n")
+            # print("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
+            # print("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
+            # print("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
             # increment total_mem_instr if Ex.is_Ptype is true
             if (state.WB.is_P_type or state.WB.is_L_type or state.WB.is_S_type):
                 total_mem_instr += 1
                 check_PC = state.WB.pc
             elif (state.WB.is_I_type or state.WB.is_R_type or state.WB.is_B_type):
-                if (state.WB.is_I_type):
-                    print("WB.PC:\t" + state.WB.pc.to01() + "\t\n")
+                # if (state.WB.is_I_type):
+                #     print("WB.PC:\t" + state.WB.pc.to01() + "\t\n")
                 total_reg_instr += 1
                 check_PC = state.WB.pc
             
@@ -412,9 +422,14 @@ class CPU():
                 if state.MEM.rd_mem:
                     (status,wrt_data) = DM.readDataMem(state.MEM.ALUresult)
                     if(status == 0):
+                        newstate.MEM = state.MEM
+                        newstate.MEM.isStalled = True
                         newstate.EX = state.EX
+                        newstate.EX.isStalled = True
                         newstate.ID = state.ID
+                        newstate.ID.isStalled = True
                         newstate.IF = state.IF
+                        newstate.IF.isStalled = True
                         newstate.WB.nop= True
                         printState(newstate, cycle)
                         state = newstate
@@ -424,6 +439,10 @@ class CPU():
                         cycle += 1            
                         continue
                     else:
+                        newstate.MEM.isStalled = False
+                        newstate.EX.isStalled = False
+                        newstate.ID.isStalled = False
+                        newstate.IF.isStalled = False
                         newstate.WB.Wrt_data = wrt_data
                 elif state.MEM.wrt_mem:
                     if state.MEM.is_P_type:
@@ -435,9 +454,14 @@ class CPU():
                     else:
                         status = DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
                         if(status ==0):
+                            newstate.MEM = state.MEM
+                            newstate.MEM.isStalled = True
                             newstate.EX = state.EX
+                            newstate.EX.isStalled = True
+                            newstate.ID = state.ID
                             newstate.ID = state.ID
                             newstate.IF = state.IF
+                            newstate.IF.isStalled = True
                             newstate.WB.nop= True
                             printState(newstate, cycle)
                             state = newstate
@@ -447,6 +471,10 @@ class CPU():
                             cycle += 1                      
                             continue
                         if state.WB.nop == False and state.WB.wrt_enable and state.WB.Rd == state.MEM.Rs2:
+                            newstate.MEM.isStalled = False
+                            newstate.EX.isStalled = False
+                            newstate.ID.isStalled = False
+                            newstate.IF.isStalled = False
                             state.MEM.Store_data = state.WB.Wrt_data
                             print("MEM-MEM sw forwarding") # probably wont happen in this project
                 else: 
@@ -463,6 +491,10 @@ class CPU():
                 newstate.WB.is_L_type = newstate.MEM.is_L_type
                 newstate.WB.is_P_type = newstate.MEM.is_P_type
                 newstate.WB.pc = state.MEM.pc
+                newstate.MEM.isStalled = False
+                newstate.EX.isStalled = False
+                newstate.ID.isStalled = False
+                newstate.IF.isStalled = False
 
             newstate.WB.nop = state.MEM.nop
 
@@ -664,10 +696,11 @@ class CPU():
 
                     if state.EX.is_I_type:
                         if state.EX.Rd == Rs1:
-                            newstate.EX.nop = True
                             newstate.ID = state.ID
+                            newstate.EX.nop = True
                             newstate.IF = state.IF
-
+                            newstate.ID.isStalled = True
+                            newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
                             print("Stalling")
@@ -678,6 +711,8 @@ class CPU():
                             newstate.EX.nop = True
                             newstate.ID = state.ID
                             newstate.IF = state.IF
+                            newstate.ID.isStalled = True
+                            newstate.IF.isStalled = True
 
                             printState(newstate,cycle)
                             cycle += 1
@@ -690,6 +725,8 @@ class CPU():
                             newstate.ID = state.ID
                             newstate.IF = state.IF
 
+                            newstate.ID.isStalled = True
+                            newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
                             print("Stalling")
@@ -701,6 +738,8 @@ class CPU():
                             newstate.ID = state.ID
                             newstate.IF = state.IF
 
+                            newstate.IF.isStalled = True
+                            newstate.ID.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
                             print("Stalling")
@@ -712,12 +751,14 @@ class CPU():
                             newstate.EX.nop = True
                             newstate.ID = state.ID
                             newstate.IF = state.IF
-
+                            newstate.ID.isStalled = True
+                            newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
                             print("Stalling")
                             continue
-
+                newstate.ID.isStalled = False
+                newstate.IF.isStalled = False            
                 if RType:
                     newstate.EX.alu_op = funct7 + funct3
                     newstate.EX.rd_mem = False
@@ -804,6 +845,7 @@ class CPU():
                 (status,instr) = IM.readInstr(state.IF.pc)
                 if(status == 0):     
                     newstate.IF =state.IF
+                    newstate.IF.isStalled = True
                     newstate.ID.nop = True
                     printState(newstate, cycle)
                     state = newstate
@@ -812,7 +854,8 @@ class CPU():
                     RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
                     cycle += 1
                     continue
-                else:
+                else:                    
+                    newstate.IF.isStalled = False
                     newstate.ID.instr = instr
                     newstate.ID.pc = state.IF.pc
                     newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
@@ -840,7 +883,7 @@ class CPU():
 
 
 def main():
-    x = 0
+    x = 1
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
