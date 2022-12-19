@@ -775,6 +775,9 @@ class CPU():
             if state.IF.nop and state.ID.nop and state.EX.nop and state.MEM.nop and state.WB.nop:
                 cycle+=1
                 printState(newstate,cycle)
+                mmr.outputDataMem(cycle)
+                DM.outputDataMem(cycle)  # dump data mem
+                RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
                 break
             printState(newstate, cycle)
             cycle += 1
@@ -787,7 +790,7 @@ class CPU():
 
 
 def main():
-    x = 0
+    x = 1
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
