@@ -365,9 +365,22 @@ class CPU():
                         if state.MEM.alu_op[7:10] == bitarray('000'):
                             mmr.storeMem()
                     else:
-                        
-                        DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
-                        print("MEM stage", state.MEM.ALUresult, state.MEM.Store_data)
+                        status = DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
+                        if(status ==0):
+                            newstate.EX = state.EX
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+                            newstate.WB.nop= True
+                            printState(newstate, cycle)
+                            state = newstate
+                            mmr.outputDataMem(cycle)
+                            DM.outputDataMem(cycle)  # dump data mem
+                            RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
+                            cycle += 1                      
+                            continue
+                        if state.WB.nop == False and state.WB.wrt_enable and state.WB.Rd == state.MEM.Rs2:
+                            state.MEM.Store_data = state.WB.Wrt_data
+                            print("MEM-MEM sw forwarding") # probably wont happen in this project
                 else: 
                     newstate.WB.Wrt_data = state.MEM.ALUresult
                 newstate.WB.Rs1 = state.MEM.Rs1
