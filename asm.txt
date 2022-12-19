@@ -1,3 +1,6 @@
+lw R2 0(R5)
+lw R3 0(R6)
+add R1 R2 R3
 addi r0 r0 1            #r0=1
 addi r1 r1 2            #r1=2
 addi r2 r2 3            #r2=3
