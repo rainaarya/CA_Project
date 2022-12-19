@@ -109,8 +109,9 @@ class RegisterFile:
     
 
 class IMem:
-    def __init__(self,x=1):
+    def __init__(self,x):
         self.x=x
+        self.clock =0
         self.IMem = [bitarray(8) for i in range(MemSize)]
         #initialize to 0
         for i in range(MemSize):
@@ -129,13 +130,20 @@ class IMem:
         insmem += self.IMem[ba2int(ReadAddress)+1].to01()
         insmem += self.IMem[ba2int(ReadAddress)+2].to01()
         insmem += self.IMem[ba2int(ReadAddress)+3].to01()
-        self.Instruction = bitarray(insmem)
-        return self.Instruction
+        if(self.clock==self.x):
+            self.clock =0 
+            self.Instruction = bitarray(insmem)
+            return (1,self.Instruction)
+        self.clock+=1
+        failure_bit = bitarray(32)
+        failure_bit.setall(0)
+        return (0,failure_bit)
 
 
 class DMem:
-    def __init__(self,x=1):
+    def __init__(self,x):
         self.x=x
+        self.clock =0
         self.DMem = [bitarray(8) for i in range(MemSize)]
         #initialize to 0
         for i in range(MemSize):
@@ -149,20 +157,37 @@ class DMem:
         self.ReadData.setall(0)
     
     def readDataMem(self, Address):
-        datamem = ""
-        datamem += self.DMem[ba2int(Address)].to01()
-        datamem += self.DMem[ba2int(Address)+1].to01()
-        datamem += self.DMem[ba2int(Address)+2].to01()
-        datamem += self.DMem[ba2int(Address)+3].to01()
-        self.ReadData = bitarray(datamem)
-        return self.ReadData
+        print(" 1 ")
+        print("self.clock = ",self.clock)
+        print("self.x = ",self.x)
+        if(self.clock==self.x):
+            datamem = ""
+            datamem += self.DMem[ba2int(Address)].to01()
+            datamem += self.DMem[ba2int(Address)+1].to01()
+            datamem += self.DMem[ba2int(Address)+2].to01()
+            datamem += self.DMem[ba2int(Address)+3].to01()
+            self.clock =0 
+            self.ReadData = bitarray(datamem)
+            return (1,self.ReadData)
+        self.clock+=1
+        failure_bit = bitarray(32)
+        failure_bit.setall(0)
+        print(" 2 ")
+        print("self.clock = ",self.clock)
+        print("self.x = ",self.x)
+        return (0,failure_bit)
     
     def writeDataMem(self, Address, WriteData):
+        if(self.clock<self.x):
+            self.clock += 1
+            return 0
         self.DMem[ba2int(Address)] = bitarray(WriteData.to01()[:8])
         self.DMem[ba2int(Address)+1] = bitarray(WriteData.to01()[8:16])
         self.DMem[ba2int(Address)+2] = bitarray(WriteData.to01()[16:24])
         self.DMem[ba2int(Address)+3] = bitarray(WriteData.to01()[24:32])
-    
+        self.clock=0
+        return 1
+
     def outputDataMem(self,cycle):
         with open("dmemresult.txt", "w") as dmemout:
             dmemout.write("Cycle :\t"+str(cycle)+ "\t\n")
@@ -274,12 +299,12 @@ def signextend(bits):
 
 
 class CPU():
-    def __init__(self,cycle):
-        self.cycle = cycle
+    def __init__(self,x):
+        self.x = x
     
     def run(self):
         RF = RegisterFile()
-        DM = DMem()
+        DM = DMem(self.x)
 
         # read instructions from instructions.txt and store in imem.txt by having 8 bits per line
         with open("instructions.txt", "r") as inst:
@@ -294,7 +319,7 @@ class CPU():
                     imem.write(line[24:32])
                     imem.write("\n")
         mmr=MMR()
-        IM = IMem()
+        IM = IMem(self.x)
         state = stateClass()
         newstate = stateClass()
 
@@ -303,7 +328,7 @@ class CPU():
         # copy values of state to newstate
         newstate = copy.deepcopy(state)
 
-        cycle = self.cycle
+        cycle = 1
 
         while True:
             # WB stage
@@ -316,7 +341,22 @@ class CPU():
             # MEM stage
             if not state.MEM.nop:
                 if state.MEM.rd_mem:
-                    newstate.WB.Wrt_data = DM.readDataMem(state.MEM.ALUresult)
+                    print("cycle = ",cycle)
+                    (status,wrt_data) = DM.readDataMem(state.MEM.ALUresult)
+                    if(status == 0):
+                        newstate.EX = state.EX
+                        newstate.ID = state.ID
+                        newstate.IF = state.IF
+                        newstate.WB.nop= True
+                        printState(newstate, cycle)
+                        state = newstate
+                        mmr.outputDataMem(cycle)
+                        DM.outputDataMem(cycle)  # dump data mem
+                        RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
+                        cycle += 1            
+                        continue
+                    else:
+                        newstate.WB.Wrt_data = wrt_data
                 elif state.MEM.wrt_mem:
                     if state.MEM.is_P_type:
                         print("state.MEM.alu_op[7:10] = ",state.MEM.alu_op[7:10])
@@ -325,16 +365,11 @@ class CPU():
                         if state.MEM.alu_op[7:10] == bitarray('000'):
                             mmr.storeMem()
                     else:
-                        # forwarding/bypassing logic
-                        if state.WB.nop == False and state.WB.wrt_enable and state.WB.Rd == state.MEM.Rs2:
-                            state.MEM.Store_data = state.WB.Wrt_data
-                            print("MEM-MEM sw forwarding") # probably wont happen in this project
-
+                        
                         DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
                         print("MEM stage", state.MEM.ALUresult, state.MEM.Store_data)
-                else:
+                else: 
                     newstate.WB.Wrt_data = state.MEM.ALUresult
-
                 newstate.WB.Rs1 = state.MEM.Rs1
                 newstate.WB.Rs2 = state.MEM.Rs2
                 newstate.WB.Rd = state.MEM.Rd
@@ -616,12 +651,24 @@ class CPU():
             
             # IF stage
             if not state.IF.nop:
-                newstate.ID.instr = IM.readInstr(state.IF.pc)
-                newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
-                if newstate.ID.instr.to01() == '11111111111111111111111111111111':
-                    newstate.IF.pc=state.IF.pc
+                (status,instr) = IM.readInstr(state.IF.pc)
+                if(status == 0):
+                    newstate.IF =state.IF
                     newstate.ID.nop = True
-                    newstate.IF.nop = True
+                    printState(newstate, cycle)
+                    state = newstate
+                    mmr.outputDataMem(cycle)
+                    DM.outputDataMem(cycle)  # dump data mem
+                    RF.outputRF(cycle)  # dump RF; uncomment to write RF to file
+                    cycle += 1                      
+                    continue
+                else:
+                    newstate.ID.instr = instr
+                    newstate.IF.pc = int2ba(ba2int(state.IF.pc) + 4, length=32)
+                    if newstate.ID.instr.to01() == '11111111111111111111111111111111':
+                        newstate.IF.pc=state.IF.pc
+                        newstate.ID.nop = True
+                        newstate.IF.nop = True
             
             newstate.ID.nop = state.IF.nop
                 
@@ -640,8 +687,8 @@ class CPU():
 
 
 def main():
-    clock =1
-    cpu = CPU(clock)
+    x =0
+    cpu = CPU(x)
     cpu.run()
     print("machine halted")
     print("total of ", cpu.cycle, " cycles executed")
