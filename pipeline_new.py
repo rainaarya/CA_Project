@@ -325,9 +325,14 @@ class CPU():
                         if state.MEM.alu_op[7:10] == bitarray('000'):
                             mmr.storeMem()
                     else:
+                        # forwarding/bypassing logic
+                        if state.WB.nop == False and state.WB.wrt_enable and state.WB.Rd == state.MEM.Rs2:
+                            state.MEM.Store_data = state.WB.Wrt_data
+                            print("MEM-MEM sw forwarding") # probably wont happen in this project
+
                         DM.writeDataMem(state.MEM.ALUresult, state.MEM.Store_data)
                         print("MEM stage", state.MEM.ALUresult, state.MEM.Store_data)
-                else: 
+                else:
                     newstate.WB.Wrt_data = state.MEM.ALUresult
 
                 newstate.WB.Rs1 = state.MEM.Rs1
@@ -339,6 +344,85 @@ class CPU():
 
             # EX stage
             if not state.EX.nop:
+
+                # forwarding/bypassing logic
+
+                if state.MEM.nop == False and state.MEM.wrt_enable and state.MEM.rd_mem == False and state.MEM.wrt_mem == False:
+                    if state.EX.is_I_type:
+                        print("state.EX.Rs1 == state.MEM.Rd", state.EX.Rs1 == state.MEM.Rd)
+                        print("state.EX.Rs1 = ", state.EX.Rs1)
+                        print("state.MEM.Rd = ", state.MEM.Rd)
+                        if state.EX.Rs1 == state.MEM.Rd:
+                            state.EX.Read_data1 = state.MEM.ALUresult
+                            print("EX->EX forwarding I-type")
+                    
+                    if state.EX.is_R_type:
+                        if state.EX.Rs1 == state.MEM.Rd:
+                            state.EX.Read_data1 = state.MEM.ALUresult
+                            print("EX->EX forwarding R-type Rs1")
+                        if state.EX.Rs2 == state.MEM.Rd:
+                            state.EX.Read_data2 = state.MEM.ALUresult
+                            print("EX->EX forwarding R-type Rs2") 
+                    
+                    if state.EX.is_B_type:
+                        if state.EX.Rs1 == state.MEM.Rd:
+                            state.EX.Read_data1 = state.MEM.ALUresult
+                            print("EX->EX forwarding B-type Rs1")
+                        if state.EX.Rs2 == state.MEM.Rd:
+                            state.EX.Read_data2 = state.MEM.ALUresult
+                            print("EX->EX forwarding B-type Rs2")
+
+                    if state.EX.is_S_type:
+                        if state.EX.Rs1 == state.MEM.Rd:
+                            state.EX.Read_data1 = state.MEM.ALUresult
+                            print("EX->EX forwarding S-type Rs1")
+                        if state.EX.Rs2 == state.MEM.Rd:
+                            state.EX.Read_data2 = state.MEM.ALUresult
+                            print("EX->EX forwarding S-type Rs2")
+                    
+                    if state.EX.is_L_type:
+                        if state.EX.Rs1 == state.MEM.Rd:
+                            state.EX.Read_data1 = state.MEM.ALUresult
+                            print("EX->EX forwarding L-type Rs1")
+
+                elif state.WB.nop == False and state.WB.wrt_enable:
+                    if state.EX.is_I_type:
+                        print("state.EX.Rs1 == state.WB.Rd", state.EX.Rs1 == state.WB.Rd)
+                        print("state.EX.Rs1", state.EX.Rs1)
+                        print("state.WB.Rd", state.WB.Rd)
+                        if state.EX.Rs1 == state.WB.Rd:
+                            state.EX.Read_data1 = state.WB.Wrt_data
+                            print("MEM->EX forwarding I-type")
+                    
+                    if state.EX.is_R_type:
+                        if state.EX.Rs1 == state.WB.Rd:
+                            state.EX.Read_data1 = state.WB.Wrt_data
+                            print("MEM->EX forwarding R-type Rs1")
+                        if state.EX.Rs2 == state.WB.Rd:
+                            state.EX.Read_data2 = state.WB.Wrt_data
+                            print("MEM->EX forwarding R-type Rs2")  
+
+                    if state.EX.is_B_type:
+                        if state.EX.Rs1 == state.WB.Rd:
+                            state.EX.Read_data1 = state.WB.Wrt_data
+                            print("MEM->EX forwarding B-type Rs1")
+                        if state.EX.Rs2 == state.WB.Rd:
+                            state.EX.Read_data2 = state.WB.Wrt_data
+                            print("MEM->EX forwarding B-type Rs2")
+
+                    if state.EX.is_S_type:
+                        if state.EX.Rs1 == state.WB.Rd:
+                            state.EX.Read_data1 = state.WB.Wrt_data
+                            print("MEM->EX forwarding S-type Rs1")
+                        if state.EX.Rs2 == state.WB.Rd:
+                            state.EX.Read_data2 = state.WB.Wrt_data
+                            print("MEM->EX forwarding S-type Rs2")
+
+                    if state.EX.is_L_type:
+                        if state.EX.Rs1 == state.WB.Rd:
+                            state.EX.Read_data1 = state.WB.Wrt_data
+                            print("MEM->EX forwarding L-type Rs1")            
+
 
                 if state.EX.is_I_type:
                     if state.EX.alu_op[7:10] == bitarray('000'):
@@ -513,6 +597,20 @@ class CPU():
                     newstate.EX.Rs1 = Rs1
                     newstate.EX.Read_data1 = RF.readRF(Rs1)
                     newstate.EX.Imm = Imm
+
+                # # code for stalling
+                # if state.EX.nop==False and state.EX.wrt_enable and (state.EX.Rd == Rs1 or state.EX.Rd == Rs2):
+                #     newstate.EX.nop = True
+                #     newstate.ID = state.ID
+                #     newstate.IF = state.IF
+
+                #     printState(newstate,cycle)
+                #     cycle += 1
+                #     print("Stalling")
+                #     continue
+
+
+            
 
             newstate.EX.nop = state.ID.nop
             
