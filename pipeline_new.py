@@ -171,9 +171,6 @@ class DMem:
         self.ReadData.setall(0)
     
     def readDataMem(self, Address):
-        print(" 1 ")
-        print("self.clock = ",self.clock)
-        print("self.x = ",self.x)
         if(self.clock==self.x):
             datamem = ""
             datamem += self.DMem[ba2int(Address)].to01()
@@ -186,9 +183,6 @@ class DMem:
         self.clock+=1
         failure_bit = bitarray(32)
         failure_bit.setall(0)
-        print(" 2 ")
-        print("self.clock = ",self.clock)
-        print("self.x = ",self.x)
         return (0,failure_bit)
     
     def writeDataMem(self, Address, WriteData):
@@ -308,7 +302,6 @@ def printState(state, cycle):
         snap.write("WB.wrt_enable:\t" + str(state.WB.wrt_enable) + "\t\n")
         snap.write("WB.nop:\t" + str(state.WB.nop) + "\t\n")
 
-        print(check_PC)
         if (check_PC != state.IF.pc):
             # increment total_mem_instr if Ex.is_Ptype is true
             if (state.EX.is_P_type or state.EX.is_L_type or state.EX.is_S_type):
@@ -377,7 +370,6 @@ class CPU():
             # MEM stage
             if not state.MEM.nop:
                 if state.MEM.rd_mem:
-                    print("cycle = ",cycle)
                     (status,wrt_data) = DM.readDataMem(state.MEM.ALUresult)
                     if(status == 0):
                         newstate.EX = state.EX
@@ -434,9 +426,6 @@ class CPU():
 
                 if state.MEM.nop == False and state.MEM.wrt_enable and state.MEM.rd_mem == False and state.MEM.wrt_mem == False:
                     if state.EX.is_I_type:
-                        print("state.EX.Rs1 == state.MEM.Rd", state.EX.Rs1 == state.MEM.Rd)
-                        print("state.EX.Rs1 = ", state.EX.Rs1)
-                        print("state.MEM.Rd = ", state.MEM.Rd)
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
                             print("EX->EX forwarding I-type")
@@ -472,9 +461,6 @@ class CPU():
 
                 elif state.WB.nop == False and state.WB.wrt_enable:
                     if state.EX.is_I_type:
-                        print("state.EX.Rs1 == state.WB.Rd", state.EX.Rs1 == state.WB.Rd)
-                        print("state.EX.Rs1", state.EX.Rs1)
-                        print("state.WB.Rd", state.WB.Rd)
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
                             print("MEM->EX forwarding I-type")
@@ -621,6 +607,66 @@ class CPU():
                 newstate.EX.is_L_type = LType
                 newstate.EX.is_P_type = PType
                 newstate.EX.instr = state.ID.instr
+
+                                # # code for stalling
+                if state.EX.nop==False and state.EX.wrt_enable:
+
+                    if state.EX.is_I_type:
+                        if state.EX.Rd == Rs1:
+                            newstate.EX.nop = True
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+
+                            printState(newstate,cycle)
+                            cycle += 1
+                            print("Stalling")
+                            continue
+
+                    elif state.EX.is_R_type:
+                        if state.EX.Rd == Rs1 or state.EX.Rd == Rs2:
+                            newstate.EX.nop = True
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+
+                            printState(newstate,cycle)
+                            cycle += 1
+                            print("Stalling")
+                            continue
+                    
+                    elif state.EX.is_B_type:
+                        if state.EX.Rd == Rs1 or state.EX.Rd == Rs2:
+                            newstate.EX.nop = True
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+
+                            printState(newstate,cycle)
+                            cycle += 1
+                            print("Stalling")
+                            continue
+                    
+                    elif state.EX.is_S_type:
+                        if state.EX.Rd == Rs1 or state.EX.Rd == Rs2:
+                            newstate.EX.nop = True
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+
+                            printState(newstate,cycle)
+                            cycle += 1
+                            print("Stalling")
+                            continue
+
+                    elif state.EX.is_L_type:
+                        # print("is lytpe")
+                        if state.EX.Rd == Rs1:
+                            newstate.EX.nop = True
+                            newstate.ID = state.ID
+                            newstate.IF = state.IF
+
+                            printState(newstate,cycle)
+                            cycle += 1
+                            print("Stalling")
+                            continue
+
                 if RType:
                     newstate.EX.alu_op = funct7 + funct3
                     newstate.EX.rd_mem = False
@@ -686,16 +732,17 @@ class CPU():
                     newstate.EX.Read_data1 = RF.readRF(Rs1)
                     newstate.EX.Imm = Imm
 
-                # # code for stalling
-                # if state.EX.nop==False and state.EX.wrt_enable and (state.EX.Rd == Rs1 or state.EX.Rd == Rs2):
-                #     newstate.EX.nop = True
-                #     newstate.ID = state.ID
-                #     newstate.IF = state.IF
 
-                #     printState(newstate,cycle)
-                #     cycle += 1
-                #     print("Stalling")
-                #     continue
+
+                    # if (state.EX.Rd == Rs1 or stzate.EX.Rd == Rs2):
+                    #     newstate.EX.nop = True
+                    #     newstate.ID = state.ID
+                    #     newstate.IF = state.IF
+
+                    #     printState(newstate,cycle)
+                    #     cycle += 1
+                    #     print("Stalling")
+                    #     continue
 
 
             
@@ -740,7 +787,7 @@ class CPU():
 
 
 def main():
-    x = 1
+    x = 0
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
