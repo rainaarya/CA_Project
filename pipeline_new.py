@@ -318,6 +318,9 @@ class CPU():
                 if state.MEM.rd_mem:
                     newstate.WB.Wrt_data = DM.readDataMem(state.MEM.ALUresult)
                 elif state.MEM.wrt_mem:
+                    if(state.WB.nop==False and state.WB.wrt_enable==True and state.WB.Rd==state.MEM.Rs2):
+                        state.MEM.Store_data = state.WB.Wrt_data
+                        print("MEM sw forwarding")
                     if state.MEM.is_P_type:
                         print("state.MEM.alu_op[7:10] = ",state.MEM.alu_op[7:10])
                         if state.MEM.alu_op[7:10] == bitarray('111'):
@@ -339,6 +342,25 @@ class CPU():
 
             # EX stage
             if not state.EX.nop:
+                
+                if(state.WB.nop== False and state.WB.wrt_enable== True and state.WB.Rd == state.EX.Rs1):
+                    state.EX.Read_data1 = state.WB.Wrt_data
+                    print("MEM-EX Rs1 bypassing")
+
+                if(state.WB.nop== False and state.WB.wrt_enable== True and state.WB.Rd == state.EX.Rs2):
+                    if(((False == state.EX.is_I_type) and (True == state.EX.wrt_enable)) or (True == state.EX.wrt_mem)):
+                        state.EX.Read_data1 = state.WB.Wrt_data
+                        print("MEM-EX Rs2 bypassing")
+
+                if(state.MEM.nop== False and state.MEM.rd_mem==False and state.MEM.wrt_mem==False and state.WB.wrt_enable== True and state.WB.Rd == state.EX.Rs1):
+                    state.EX.Read_data1 = state.MEM.ALUresult
+                    print("EX-EX Rs1 bypassing")
+
+                if(state.MEM.nop== False and state.MEM.rd_mem==False and state.MEM.wrt_mem==False and state.WB.wrt_enable== True and state.WB.Rd == state.EX.Rs2):
+                    if(((False == state.EX.is_I_type) and (True == state.EX.wrt_enable))): # OR (1 == state.EX.wrt_mem))  addu, subu, for sw, we choose MEM-MEM but EX-EX
+                        state.EX.Read_data2 = state.MEM.ALUresult
+                        print("EX-EX Rs2 bypassing")
+
 
                 if state.EX.is_I_type:
                     if state.EX.alu_op[7:10] == bitarray('000'):
@@ -514,6 +536,17 @@ class CPU():
                     newstate.EX.Read_data1 = RF.readRF(Rs1)
                     newstate.EX.Imm = Imm
 
+            if(state.EX.nop==False and state.EX.wrt_enable==True):
+                if(state.EX.Rd == Rs1 or state.EX.Rd == Rs2):
+                    newstate.EX.nop=1
+                    newstate.ID = state.ID
+                    newstate.IF = state.IF
+                    printState(newstate, cycle)
+                    state=newstate
+                    cycle+=1
+                    print("Stalling state")
+                    continue
+
             newstate.EX.nop = state.ID.nop
             
             # IF stage
@@ -551,12 +584,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-    
