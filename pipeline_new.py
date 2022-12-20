@@ -6,11 +6,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-total_reg_instr = 0
-total_mem_instr = 0
-check_PC = -1
-
-
 MemSize = 1024
 
 class IFClass:
@@ -342,35 +337,7 @@ def printState(state, cycle):
         snap.write("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
         snap.write("WB.isStalled:\t" + str(state.WB.isStalled) + "\t\n")
         snap.write("WB.nop:\t" + str(state.WB.nop) + "\t\n")
-
-        if (check_PC != state.WB.pc):
-            # print("WB.is_I_type:\t" + str(state.WB.is_I_type) + "\t\n")
-            # print("WB.is_R_type:\t" + str(state.WB.is_R_type) + "\t\n")
-            # print("WB.is_B_type:\t" + str(state.WB.is_B_type) + "\t\n")
-            # print("WB.is_S_type:\t" + str(state.WB.is_S_type) + "\t\n")
-            # print("WB.is_L_type:\t" + str(state.WB.is_L_type) + "\t\n")
-            # print("WB.is_P_type:\t" + str(state.WB.is_P_type) + "\t\n")
-            # increment total_mem_instr if Ex.is_Ptype is true
-            if (state.WB.is_P_type or state.WB.is_L_type or state.WB.is_S_type):
-                total_mem_instr += 1
-                check_PC = state.WB.pc
-            elif (state.WB.is_I_type or state.WB.is_R_type or state.WB.is_B_type):
-                # if (state.WB.is_I_type):
-                #     print("WB.PC:\t" + state.WB.pc.to01() + "\t\n")
-                total_reg_instr += 1
-                check_PC = state.WB.pc
-            
-def plot1():
-    instr_type = ['Register', 'Memory']
-    instr_count = [total_reg_instr, total_mem_instr]
-    fig = plt.figure(figsize = (10, 5))
-    plt.bar(instr_type,instr_count, color ='blue',width = 0.4)
-    plt.xlabel("Instruction Type")
-    plt.ylabel("Number of Instructions")
-    plt.title("Number of Instructions of each type")
-    plt.show()
     
-
 
 def signextend(bits):
     bits=bits.to01()
@@ -883,7 +850,7 @@ class CPU():
 
 
 def main():
-    x = 1
+    x = 0
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
@@ -895,9 +862,7 @@ def main():
     cpu = CPU(x)
     cpu.run()
     print("machine halted")
-    print("total of ", cpu.cycle, " cycles executed")
-    plot1()
-    
+    print("total of ", cpu.cycle, " cycles executed")    
 
 
 if __name__ == "__main__":
