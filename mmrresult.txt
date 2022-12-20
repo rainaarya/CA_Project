@@ -1,7 +1,0 @@
-Cycle :	52	
-MMR0: 	[] 
- MMR1: 	[] 
- MMR2: 	[5] 
- MMR3: 	[] 
- MMR4: 	[1] 
- 

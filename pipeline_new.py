@@ -349,12 +349,13 @@ def signextend(bits):
 
 
 class CPU():
-    def __init__(self,x):
+    def __init__(self,x,y):
         self.x = x
+        self.y = y
     
     def run(self):
         RF = RegisterFile()
-        DM = DMem(self.x)
+        DM = DMem(self.y)
 
         # read instructions from instructions.txt and store in imem.txt by having 8 bits per line
         with open("instructions.txt", "r") as inst:
@@ -381,7 +382,6 @@ class CPU():
             # WB stage
             if not state.WB.nop:
                 if state.WB.wrt_enable:
-                    #print("WB stage")
                     RF.writeRF(state.WB.Rd, state.WB.Wrt_data)
                                 
             # MEM stage
@@ -413,7 +413,6 @@ class CPU():
                         newstate.WB.Wrt_data = wrt_data
                 elif state.MEM.wrt_mem:
                     if state.MEM.is_P_type:
-                        print("state.MEM.alu_op[7:10] = ",state.MEM.alu_op[7:10])
                         if state.MEM.alu_op[7:10] == bitarray('111'):
                             mmr.writeMem(ba2int(RF.readRF(state.MEM.Rd)) , ba2int(state.MEM.Imm) + ba2int(RF.readRF(state.MEM.Rs1)) )
                         if state.MEM.alu_op[7:10] == bitarray('000'):
@@ -481,71 +480,71 @@ class CPU():
                     if state.EX.is_I_type:
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
-                            print("EX->EX forwarding I-type")
+                            # print("EX->EX forwarding I-type")
                     
                     if state.EX.is_R_type:
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
-                            print("EX->EX forwarding R-type Rs1")
+                            # print("EX->EX forwarding R-type Rs1")
                         if state.EX.Rs2 == state.MEM.Rd:
                             state.EX.Read_data2 = state.MEM.ALUresult
-                            print("EX->EX forwarding R-type Rs2") 
+                            # print("EX->EX forwarding R-type Rs2") 
                     
                     if state.EX.is_B_type:
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
-                            print("EX->EX forwarding B-type Rs1")
+                            # print("EX->EX forwarding B-type Rs1")
                         if state.EX.Rs2 == state.MEM.Rd:
                             state.EX.Read_data2 = state.MEM.ALUresult
-                            print("EX->EX forwarding B-type Rs2")
+                            # print("EX->EX forwarding B-type Rs2")
 
                     if state.EX.is_S_type:
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
-                            print("EX->EX forwarding S-type Rs1")
+                            # print("EX->EX forwarding S-type Rs1")
                         if state.EX.Rs2 == state.MEM.Rd:
                             state.EX.Read_data2 = state.MEM.ALUresult
-                            print("EX->EX forwarding S-type Rs2")
+                            # print("EX->EX forwarding S-type Rs2")
                     
                     if state.EX.is_L_type:
                         if state.EX.Rs1 == state.MEM.Rd:
                             state.EX.Read_data1 = state.MEM.ALUresult
-                            print("EX->EX forwarding L-type Rs1")
+                            # print("EX->EX forwarding L-type Rs1")
 
                 elif state.WB.nop == False and state.WB.wrt_enable:
                     if state.EX.is_I_type:
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
-                            print("MEM->EX forwarding I-type")
+                            # print("MEM->EX forwarding I-type")
                     
                     if state.EX.is_R_type:
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
-                            print("MEM->EX forwarding R-type Rs1")
+                            # print("MEM->EX forwarding R-type Rs1")
                         if state.EX.Rs2 == state.WB.Rd:
                             state.EX.Read_data2 = state.WB.Wrt_data
-                            print("MEM->EX forwarding R-type Rs2")  
+                            # print("MEM->EX forwarding R-type Rs2")  
 
                     if state.EX.is_B_type:
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
-                            print("MEM->EX forwarding B-type Rs1")
+                            # print("MEM->EX forwarding B-type Rs1")
                         if state.EX.Rs2 == state.WB.Rd:
                             state.EX.Read_data2 = state.WB.Wrt_data
-                            print("MEM->EX forwarding B-type Rs2")
+                            # print("MEM->EX forwarding B-type Rs2")
 
                     if state.EX.is_S_type:
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
-                            print("MEM->EX forwarding S-type Rs1")
+                            # print("MEM->EX forwarding S-type Rs1")
                         if state.EX.Rs2 == state.WB.Rd:
                             state.EX.Read_data2 = state.WB.Wrt_data
-                            print("MEM->EX forwarding S-type Rs2")
+                            # print("MEM->EX forwarding S-type Rs2")
 
                     if state.EX.is_L_type:
                         if state.EX.Rs1 == state.WB.Rd:
                             state.EX.Read_data1 = state.WB.Wrt_data
-                            print("MEM->EX forwarding L-type Rs1")            
+                            # print("MEM->EX forwarding L-type Rs1")            
 
 
                 if state.EX.is_I_type:
@@ -597,11 +596,8 @@ class CPU():
                             newstate.MEM.nop = False
                             newstate.EX.nop = True
                             newstate.ID.nop = True
-
                             newstate.IF.pc= int2ba((ba2int(state.IF.pc) + ba2int(signext) - 8), length=32) # -8 because PC is incremented by 4 when the branch instruc is in IF stage and again by 4 when it is in ID stage. So we need to subtract 2*4=8 to get the correct PC value
                             newstate.IF.nop = False
-
-                            print("Branch taken")
                             newstate.MEM.rd_mem = state.EX.rd_mem
                             newstate.MEM.wrt_mem = state.EX.wrt_mem
                             newstate.MEM.Rs1 = state.EX.Rs1
@@ -616,8 +612,6 @@ class CPU():
                             state = newstate
                             cycle += 1
                             continue
-                        else:
-                            print("Branch not taken")
 
                 if state.EX.is_P_type:
                     newstate.MEM.is_P_type = True
@@ -670,7 +664,6 @@ class CPU():
                             newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
-                            print("Stalling")
                             continue
 
                     elif state.EX.is_R_type:
@@ -683,7 +676,6 @@ class CPU():
 
                             printState(newstate,cycle)
                             cycle += 1
-                            print("Stalling")
                             continue
                     
                     elif state.EX.is_B_type:
@@ -696,7 +688,6 @@ class CPU():
                             newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
-                            print("Stalling")
                             continue
                     
                     elif state.EX.is_S_type:
@@ -709,7 +700,6 @@ class CPU():
                             newstate.ID.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
-                            print("Stalling")
                             continue
 
                     elif state.EX.is_L_type:
@@ -722,7 +712,6 @@ class CPU():
                             newstate.IF.isStalled = True
                             printState(newstate,cycle)
                             cycle += 1
-                            print("Stalling")
                             continue
                 newstate.ID.isStalled = False
                 newstate.IF.isStalled = False            
@@ -850,7 +839,8 @@ class CPU():
 
 
 def main():
-    x = 0
+    x = int(input("Enter the delay of cycles for Imem: "))
+    y = int(input("Enter the delay of cycles for Dmem: "))
         # if RFresult.txt exists, remove it
     if os.path.isfile("RFresult.txt"):
         os.remove("RFresult.txt")
@@ -859,10 +849,10 @@ def main():
     if os.path.isfile("dmemresult.txt"):
         os.remove("dmemresult.txt")
         
-    cpu = CPU(x)
+    cpu = CPU(x,y)
     cpu.run()
     print("machine halted")
-    print("total of ", cpu.cycle, " cycles executed")    
+    print("total of ", cpu.cycle, " cycles executed") 
 
 
 if __name__ == "__main__":
