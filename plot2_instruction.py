@@ -22,3 +22,4 @@ for line in Lines:
     else:
         continue;
 plt.plot(xaxis,yaxis,'ro')
+plt.show()
